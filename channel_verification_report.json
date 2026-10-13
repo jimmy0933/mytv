@@ -1,0 +1,101 @@
+[
+  {
+    "id": "ebc_news",
+    "name": "東森新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "5n0y3R0d5x0",
+    "official_url": "https://news.ebc.net.tw/",
+    "embeddable": true,
+    "status": "FAIL",
+    "title": ""
+  },
+  {
+    "id": "tvbs_news",
+    "name": "TVBS新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "2mCSYvcfhtc",
+    "official_url": "https://news.tvbs.com.tw/",
+    "embeddable": true,
+    "status": "OK",
+    "title": "【ON AIR】TVBS新聞台 24 小時直播 |Taiwan News Live|台湾TVBS NEWS世界中のニュースを24時間配信中 | 대만 TVBS뉴스 24시간 생방송"
+  },
+  {
+    "id": "cts_news",
+    "name": "華視新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "wM0g8EoUZ_E",
+    "official_url": "https://news.cts.com.tw/",
+    "embeddable": true,
+    "status": "OK",
+    "title": "#LIVE: 華視新聞直播 CH52 | Taiwan CTS News | 台湾のニュースを24時間配信 | 대만 24시간 뉴스채널 | 24小時 線上看 LIVE新聞【On Air】"
+  },
+  {
+    "id": "ctv_news",
+    "name": "中視新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "TCnaIE_SAtM",
+    "official_url": "https://www.ctv.com.tw/",
+    "embeddable": true,
+    "status": "OK",
+    "title": "中視新聞LIVE直播頻道24小時線上直播｜Taiwan CTV news HD 24h live news |台湾のCTV ニュースHD 대만 24시간 뉴스채널  | (生放送)"
+  },
+  {
+    "id": "ttv_news",
+    "name": "台視新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "xL0ch83pjK8",
+    "official_url": "https://news.ttv.com.tw/",
+    "embeddable": true,
+    "status": "FAIL",
+    "title": ""
+  },
+  {
+    "id": "ftv_news",
+    "name": "民視新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "ylYJSBUgaMA",
+    "official_url": "https://www.ftvnews.com.tw/",
+    "embeddable": true,
+    "status": "OK",
+    "title": "🟢LIVE 民視新聞24小時直播  FTV 新聞直播｜Taiwan News Live｜台湾ニュース Live｜대만 뉴스 방송 Live @FTV_News"
+  },
+  {
+    "id": "set_news",
+    "name": "三立新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "41yP4L9PzM8",
+    "official_url": "https://www.setn.com/",
+    "embeddable": true,
+    "status": "FAIL",
+    "title": ""
+  },
+  {
+    "id": "ebc_financial",
+    "name": "東森財經新聞",
+    "category": "財經",
+    "type": "youtube_iframe",
+    "youtube_video_id": "W22C1m3O6Q0",
+    "official_url": "https://fnc.ebc.net.tw/",
+    "embeddable": true,
+    "status": "FAIL",
+    "title": ""
+  },
+  {
+    "id": "pts_main",
+    "name": "公視主頻",
+    "category": "綜合",
+    "type": "youtube_iframe",
+    "youtube_video_id": "C6gY_4C3Ias",
+    "official_url": "https://www.pts.org.tw/",
+    "embeddable": true,
+    "status": "FAIL",
+    "title": ""
+  }
+]

@@ -1,0 +1,112 @@
+[
+  {
+    "id": "ebc_news",
+    "name": "東森新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": null,
+    "official_url": "https://news.ebc.net.tw/",
+    "embeddable": true,
+    "title": "Evgeny  - YouTube"
+  },
+  {
+    "id": "tvbs_news",
+    "name": "TVBS新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "m_dhMSvUCIc",
+    "official_url": "https://news.tvbs.com.tw/",
+    "embeddable": true,
+    "title": " - YouTube"
+  },
+  {
+    "id": "cts_news",
+    "name": "華視新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": null,
+    "official_url": "https://news.cts.com.tw/",
+    "embeddable": true,
+    "title": "HTTP Error 404: Not Found"
+  },
+  {
+    "id": "ctv_news",
+    "name": "中視新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "VGpERFOqH7Q",
+    "official_url": "https://www.ctv.com.tw/",
+    "embeddable": true,
+    "title": " - YouTube"
+  },
+  {
+    "id": "ttv_news",
+    "name": "台視新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "jRlcwLmp0Bs",
+    "official_url": "https://news.ttv.com.tw/",
+    "embeddable": true,
+    "title": " - YouTube"
+  },
+  {
+    "id": "ftv_news",
+    "name": "民視新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "D_YeV3_-oO0",
+    "official_url": "https://www.ftvnews.com.tw/",
+    "embeddable": true,
+    "title": " - YouTube"
+  },
+  {
+    "id": "set_news",
+    "name": "三立新聞",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "exyvZtJTKMQ",
+    "official_url": "https://www.setn.com/",
+    "embeddable": true,
+    "title": " - YouTube"
+  },
+  {
+    "id": "ebc_financial",
+    "name": "東森財經新聞",
+    "category": "財經",
+    "type": "youtube_iframe",
+    "youtube_video_id": null,
+    "official_url": "https://fnc.ebc.net.tw/",
+    "embeddable": true,
+    "title": "HTTP Error 404: Not Found"
+  },
+  {
+    "id": "pts_main",
+    "name": "公視新聞/公視",
+    "category": "綜合",
+    "type": "youtube_iframe",
+    "youtube_video_id": "C6gYqSHLRw4",
+    "official_url": "https://www.pts.org.tw/",
+    "embeddable": true,
+    "title": "公共電視 13頻道 網路直播 PTS Live - YouTube"
+  },
+  {
+    "id": "daai_tv",
+    "name": "大愛電視",
+    "category": "綜合",
+    "type": "youtube_iframe",
+    "youtube_video_id": "fjPstEA8iB4",
+    "official_url": "https://www.daai.tv/",
+    "embeddable": true,
+    "title": " - YouTube"
+  },
+  {
+    "id": "ebc_yoyo",
+    "name": "YOYO TV",
+    "category": "兒童",
+    "type": "youtube_iframe",
+    "youtube_video_id": null,
+    "official_url": "https://yoyo.ebc.net.tw/",
+    "embeddable": true,
+    "title": "HTTP Error 404: Not Found"
+  }
+]
