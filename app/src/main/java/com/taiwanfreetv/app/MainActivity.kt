@@ -12,10 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.lifecycleScope
 import com.taiwanfreetv.app.data.model.Channel
+import com.taiwanfreetv.app.data.model.PlaybackStatus
+import com.taiwanfreetv.app.data.model.StreamType
 import com.taiwanfreetv.app.data.repository.ChannelRepository
 import com.taiwanfreetv.app.data.repository.UserPreferencesRepository
 import com.taiwanfreetv.app.ui.home.HomeScreen
 import com.taiwanfreetv.app.ui.player.PlayerScreen
+import com.taiwanfreetv.app.ui.player.launchOfficialUrl
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -33,6 +36,8 @@ class MainActivity : ComponentActivity() {
     private var allChannels by mutableStateOf<List<Channel>>(emptyList())
     private var categories by mutableStateOf<List<String>>(listOf("全部"))
     private var selectedCategory by mutableStateOf("全部")
+    private val playbackFilters = listOf("全部頻道", "App 內可播放", "官方平台觀看")
+    private var selectedPlaybackFilter by mutableStateOf("全部頻道")
     private var searchQuery by mutableStateOf("")
     private var favoriteIds by mutableStateOf<Set<String>>(emptySet())
 
@@ -53,7 +58,7 @@ class MainActivity : ComponentActivity() {
                 val lastChannelId = userPreferencesRepository.lastWatchedChannelId.first()
                 if (!lastChannelId.isNullOrEmpty() && allChannels.isNotEmpty()) {
                     val found = allChannels.find { it.id == lastChannelId }
-                    if (found != null) {
+                    if (found != null && found.status == PlaybackStatus.PLAYABLE && found.type != StreamType.EXTERNAL_WEB) {
                         currentScreen = Screen.Player(found)
                     }
                 }
@@ -75,12 +80,17 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.Black
                 ) {
-                    val filteredChannels = remember(allChannels, selectedCategory, searchQuery, favoriteIds) {
+                    val filteredChannels = remember(allChannels, selectedCategory, selectedPlaybackFilter, searchQuery, favoriteIds) {
                         allChannels.filter { channel ->
                             val matchesCategory = when (selectedCategory) {
                                 "全部" -> true
                                 "收藏" -> favoriteIds.contains(channel.id)
                                 else -> channel.category == selectedCategory
+                            }
+                            val matchesPlaybackFilter = when (selectedPlaybackFilter) {
+                                "App 內可播放" -> channel.status == PlaybackStatus.PLAYABLE && channel.type != StreamType.EXTERNAL_WEB
+                                "官方平台觀看" -> channel.status == PlaybackStatus.EMBED_DISABLED || channel.type == StreamType.EXTERNAL_WEB
+                                else -> true
                             }
                             val matchesSearch = if (searchQuery.isBlank()) {
                                 true
@@ -88,7 +98,7 @@ class MainActivity : ComponentActivity() {
                                 channel.name.contains(searchQuery, ignoreCase = true) ||
                                         (channel.number.toString() == searchQuery)
                             }
-                            matchesCategory && matchesSearch
+                            matchesCategory && matchesPlaybackFilter && matchesSearch
                         }
                     }
 
@@ -98,12 +108,19 @@ class MainActivity : ComponentActivity() {
                                 channels = filteredChannels,
                                 categories = categories,
                                 selectedCategory = selectedCategory,
+                                selectedPlaybackFilter = selectedPlaybackFilter,
+                                playbackFilters = playbackFilters,
                                 searchQuery = searchQuery,
                                 favoriteIds = favoriteIds,
                                 onCategorySelected = { selectedCategory = it },
+                                onPlaybackFilterSelected = { selectedPlaybackFilter = it },
                                 onSearchQueryChanged = { searchQuery = it },
                                 onChannelClick = { channel ->
-                                    playChannel(channel)
+                                    if (channel.type == StreamType.EXTERNAL_WEB || channel.status == PlaybackStatus.EMBED_DISABLED) {
+                                        launchOfficialUrl(this@MainActivity, channel.officialUrl)
+                                    } else {
+                                        playChannel(channel)
+                                    }
                                 },
                                 onToggleFavorite = { channel ->
                                     lifecycleScope.launch {
@@ -174,6 +191,7 @@ class MainActivity : ComponentActivity() {
         return super.onKeyDown(keyCode, event)
     }
 
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
         if (currentScreen is Screen.Player) {
             currentScreen = Screen.Home

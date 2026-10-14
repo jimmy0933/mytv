@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "updatedAt": "2026-03-31",
   "categories": [
     "全部",
@@ -15,31 +15,29 @@
       "id": "ttv_news",
       "name": "台視新聞台",
       "category": "新聞",
-      "type": "youtube_iframe",
-      "youtube_video_id": "9iRAqBMakXY",
+      "type": "external_web",
       "official_url": "https://news.ttv.com.tw/",
-      "embeddable": true,
-      "status": "playable",
-      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "embeddable": false,
+      "status": "embed_disabled",
+      "status_message": "台視新聞台 YouTube 直播受內嵌權限限制，提供官方直播網頁觀看",
       "last_verified": "2026-03-31",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/TTV_News_logo.png/200px-TTV_News_logo.png",
       "number": 8,
-      "description": "台視新聞台 24小時線上直播"
+      "description": "台視新聞台 24小時線上直播 (官方平台觀看)"
     },
     {
       "id": "daai_tv",
       "name": "大愛電視台",
       "category": "綜合",
-      "type": "youtube_iframe",
-      "youtube_video_id": "pM-1ytfQhos",
+      "type": "external_web",
       "official_url": "https://www.daai.tv/",
-      "embeddable": true,
-      "status": "playable",
-      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "embeddable": false,
+      "status": "embed_disabled",
+      "status_message": "大愛電視台 YouTube 直播受內嵌權限限制，提供官方直播網頁觀看",
       "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 9,
-      "description": "大愛電視 24小時線上直播"
+      "description": "大愛電視 24小時線上直播 (官方平台觀看)"
     },
     {
       "id": "ctv_news",
@@ -61,14 +59,14 @@
       "name": "公視主頻道",
       "category": "綜合",
       "type": "external_web",
-      "official_url": "https://www.youtube.com/watch?v=C6gYqSHLRw4",
+      "official_url": "https://www.pts.org.tw/",
       "embeddable": false,
       "status": "embed_disabled",
-      "status_message": "公視官方影片限制內嵌播放，提供官方觀看連結",
+      "status_message": "公視官方直播限制第三方 App 內嵌，提供官方直播網頁觀看",
       "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 13,
-      "description": "公共電視 網路直播 (官方網頁觀看)"
+      "description": "公共電視 網路直播 (官方平台觀看)"
     },
     {
       "id": "nhk_world_japan",
@@ -82,7 +80,7 @@
       "last_verified": "2026-03-31",
       "logo_url": "https://www3.nhk.or.jp/nhkworld/common/assets/parts/img/logo.png",
       "number": 14,
-      "description": "NHK WORLD-JAPAN 免費英語國際新聞直播"
+      "description": "NHK WORLD-JAPAN 免費英語國際新聞直播 (官方平台觀看)"
     },
     {
       "id": "ebc_yoyo",
@@ -178,16 +176,15 @@
       "id": "tvbs_news",
       "name": "TVBS新聞台",
       "category": "新聞",
-      "type": "youtube_iframe",
-      "youtube_video_id": "2mCSYvcfhtc",
+      "type": "external_web",
       "official_url": "https://news.tvbs.com.tw/",
-      "embeddable": true,
-      "status": "playable",
-      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "embeddable": false,
+      "status": "embed_disabled",
+      "status_message": "TVBS 新聞台官方 YouTube 頻道禁止第三方 App 內嵌，提供官方直播網頁觀看",
       "last_verified": "2026-03-31",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TVBS_News_logo.png/200px-TVBS_News_logo.png",
       "number": 55,
-      "description": "TVBS新聞台 24小時直播"
+      "description": "TVBS新聞台 24小時直播 (官方平台觀看)"
     },
     {
       "id": "ebc_financial",
