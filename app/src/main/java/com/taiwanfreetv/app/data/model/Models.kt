@@ -13,6 +13,23 @@ enum class StreamType {
     EXTERNAL_WEB
 }
 
+enum class PlaybackStatus {
+    @SerializedName("playable")
+    PLAYABLE,
+
+    @SerializedName("embed_disabled")
+    EMBED_DISABLED,
+
+    @SerializedName("geo_restricted")
+    GEO_RESTRICTED,
+
+    @SerializedName("source_invalid")
+    SOURCE_INVALID,
+
+    @SerializedName("unverified")
+    UNVERIFIED
+}
+
 data class Channel(
     val id: String,
     val name: String,
@@ -28,7 +45,12 @@ data class Channel(
     @SerializedName("logo_url")
     val logoUrl: String? = null,
     val number: Int = 0,
-    val description: String? = null
+    val description: String? = null,
+    val status: PlaybackStatus = PlaybackStatus.PLAYABLE,
+    @SerializedName("status_message")
+    val statusMessage: String? = null,
+    @SerializedName("last_verified")
+    val lastVerified: String? = null
 )
 
 data class EPGProgram(

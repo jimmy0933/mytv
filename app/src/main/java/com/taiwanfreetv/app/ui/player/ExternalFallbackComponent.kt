@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.taiwanfreetv.app.data.model.Channel
+import com.taiwanfreetv.app.data.model.PlaybackStatus
 
 fun launchOfficialUrl(context: Context, url: String) {
     try {
@@ -44,9 +45,17 @@ fun launchOfficialUrl(context: Context, url: String) {
 @Composable
 fun ExternalFallbackComponent(
     channel: Channel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    customMessage: String? = null
 ) {
     val context = LocalContext.current
+
+    val message = customMessage ?: when (channel.status) {
+        PlaybackStatus.EMBED_DISABLED -> "此頻道需透過官方平台觀看"
+        PlaybackStatus.GEO_RESTRICTED -> "此頻道在當前地區受播映權限限制\n請透過官方頁面觀看"
+        PlaybackStatus.SOURCE_INVALID -> "此頻道線上直播來源暫時失效\n請開啟官方網站查看"
+        else -> "此頻道官方來源限制 App 內嵌播放\n請點擊下方按鈕開啟官方免費直播頁觀看"
+    }
 
     Column(
         modifier = modifier
@@ -71,16 +80,16 @@ fun ExternalFallbackComponent(
             color = Color.White
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "此頻道官方來源限制 App 內嵌播放。\n請點擊下方按鈕開啟官方免費直播頁觀看。",
+            text = message,
             style = MaterialTheme.typography.bodySmall,
             color = Color.LightGray,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Button(
             onClick = { launchOfficialUrl(context, channel.officialUrl) },

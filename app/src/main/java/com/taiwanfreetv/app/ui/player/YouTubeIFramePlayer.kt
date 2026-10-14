@@ -27,7 +27,7 @@ import androidx.lifecycle.LifecycleEventObserver
 private class YouTubeJsInterface(
     private val onReadyCallback: () -> Unit,
     private val onStateChangeCallback: (Int) -> Unit,
-    private val onErrorCallback: (String) -> Unit
+    private val onErrorCallback: (Int, String) -> Unit
 ) {
     private val mainHandler = Handler(Looper.getMainLooper())
 
@@ -52,12 +52,12 @@ private class YouTubeJsInterface(
                 2 -> "無效的影片 ID 參數 (錯誤碼 2)"
                 5 -> "HTML5 播放器載入失敗 (錯誤碼 5)"
                 100 -> "影片不存在、已移除或設為私有 (錯誤碼 100)"
-                101, 150 -> "影片擁有者禁止在第三方播放器中內嵌播放 (錯誤碼 $code)"
-                152 -> "YouTube 內嵌來源驗證失敗或限制 (錯誤碼 152)"
+                101, 150 -> "此頻道需透過官方平台觀看 (錯誤碼 $code)"
+                152 -> "YouTube 內嵌來源驗證限制 (錯誤碼 152)"
                 153 -> "YouTube 嵌入播放器遭遇受限內容錯誤 (錯誤碼 153)"
                 else -> "YouTube 影片載入失敗 (錯誤碼 $code)"
             }
-            onErrorCallback(message)
+            onErrorCallback(code, message)
         }
     }
 }
@@ -68,7 +68,7 @@ fun YouTubeIFramePlayer(
     videoId: String,
     modifier: Modifier = Modifier,
     onLoadingChanged: (Boolean) -> Unit = {},
-    onError: (String) -> Unit = {}
+    onError: (Int, String) -> Unit = { _, _ -> }
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -145,7 +145,6 @@ fun YouTubeIFramePlayer(
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
-    // Pause/Resume/Destroy WebView according to Lifecycle
     DisposableEffect(lifecycleOwner, videoId) {
         val observer = LifecycleEventObserver { _, event ->
             val targetWebView = webViewRef
@@ -196,7 +195,6 @@ fun YouTubeIFramePlayer(
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
 
-                    // Enable Cookie manager
                     val cookieManager = CookieManager.getInstance()
                     cookieManager.setAcceptCookie(true)
                     cookieManager.setAcceptThirdPartyCookies(this, true)
@@ -223,9 +221,9 @@ fun YouTubeIFramePlayer(
                                     0, 2, 5 -> onLoadingChanged(false) // ENDED, PAUSED, CUED
                                 }
                             },
-                            onErrorCallback = { errorMsg ->
+                            onErrorCallback = { errorCode, errorMsg ->
                                 onLoadingChanged(false)
-                                onError(errorMsg)
+                                onError(errorCode, errorMsg)
                             }
                         ),
                         "AndroidBridge"
@@ -241,7 +239,7 @@ fun YouTubeIFramePlayer(
                             failingUrl: String?
                         ) {
                             onLoadingChanged(false)
-                            onError("網路連線或頁面載入異常: $description")
+                            onError(-1, "網路連線或頁面載入異常: $description")
                         }
                     }
 
@@ -260,9 +258,7 @@ fun YouTubeIFramePlayer(
                     webViewRef = this
                 }
             },
-            update = {
-                // Do NOT reload HTML content during recomposition to prevent video playback interruption.
-            },
+            update = {},
             modifier = Modifier.fillMaxSize()
         )
     }

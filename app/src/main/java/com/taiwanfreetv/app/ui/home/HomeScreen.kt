@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.taiwanfreetv.app.BuildConfig
 import com.taiwanfreetv.app.data.model.Channel
+import com.taiwanfreetv.app.data.model.PlaybackStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -174,7 +175,7 @@ fun ChannelCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(130.dp)
+            .height(135.dp)
             .clickable { onClick() }
             .focusable(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF252525)),
@@ -192,17 +193,44 @@ fun ChannelCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        color = Color(0xFF1E88E5),
-                        shape = RoundedCornerShape(4.dp)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = if (channel.number > 0) "CH${channel.number}" else channel.category,
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
+                        Surface(
+                            color = Color(0xFF1E88E5),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = if (channel.number > 0) "CH${channel.number}" else channel.category,
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+
+                        // Playback status tag
+                        val (statusText, statusBg) = when (channel.status) {
+                            PlaybackStatus.PLAYABLE -> "可播放" to Color(0xFF2E7D32)
+                            PlaybackStatus.EMBED_DISABLED -> "需官方觀看" to Color(0xFFD84315)
+                            PlaybackStatus.GEO_RESTRICTED -> "地區限制" to Color(0xFFE65100)
+                            PlaybackStatus.SOURCE_INVALID -> "來源失效" to Color(0xFFC62828)
+                            PlaybackStatus.UNVERIFIED -> "尚未驗證" to Color(0xFF616161)
+                        }
+
+                        Surface(
+                            color = statusBg,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = statusText,
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Normal,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
                     }
 
                     IconButton(
