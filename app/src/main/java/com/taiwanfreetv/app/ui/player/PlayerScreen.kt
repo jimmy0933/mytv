@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.taiwanfreetv.app.data.model.Channel
+import com.taiwanfreetv.app.data.model.PlaybackStatus
 import com.taiwanfreetv.app.data.model.StreamType
 import kotlinx.coroutines.delay
 
@@ -62,20 +63,27 @@ fun PlayerScreen(
 
     var isDrawerOpen by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorCode by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(true) }
     var retryTrigger by remember { mutableStateOf(0) }
     var areControlsVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
-    // Reset error & loading when channel changes or retry is triggered
+    // Is permanent non-embeddable restriction? (e.g. YouTube error 101, 150 or status = EMBED_DISABLED / EXTERNAL_WEB)
+    val isPermanentEmbedRestriction = remember(currentChannel, errorCode) {
+        currentChannel.type == StreamType.EXTERNAL_WEB ||
+        currentChannel.status == PlaybackStatus.EMBED_DISABLED ||
+        errorCode == 101 || errorCode == 150
+    }
+
     LaunchedEffect(currentChannel.id, retryTrigger) {
         errorMessage = null
+        errorCode = 0
         isLoading = true
         areControlsVisible = true
         lastInteractionTime = System.currentTimeMillis()
     }
 
-    // Auto-hide controls after 3.5 seconds of inactivity in Landscape
     LaunchedEffect(areControlsVisible, lastInteractionTime, isDrawerOpen, isLandscape) {
         if (isLandscape && areControlsVisible && !isDrawerOpen) {
             delay(3500)
@@ -98,7 +106,7 @@ fun PlayerScreen(
             .navigationBarsPadding()
     ) {
         if (isLandscape) {
-            // Landscape: Full screen video area complying with YouTube Guidelines
+            // Landscape Mode
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -110,17 +118,25 @@ fun PlayerScreen(
                         if (areControlsVisible) lastInteractionTime = System.currentTimeMillis()
                     }
             ) {
-                PlayerCore(
-                    currentChannel = currentChannel,
-                    retryTrigger = retryTrigger,
-                    onLoadingChanged = { isLoading = it },
-                    onError = { err ->
-                        errorMessage = err
-                        isLoading = false
-                    }
-                )
+                if (isPermanentEmbedRestriction) {
+                    ExternalFallbackComponent(
+                        channel = currentChannel,
+                        modifier = Modifier.fillMaxSize(),
+                        customMessage = if (errorCode == 101 || errorCode == 150) "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
+                    )
+                } else {
+                    PlayerCore(
+                        currentChannel = currentChannel,
+                        retryTrigger = retryTrigger,
+                        onLoadingChanged = { isLoading = it },
+                        onError = { code, err ->
+                            errorCode = code
+                            errorMessage = err
+                            isLoading = false
+                        }
+                    )
+                }
 
-                // Non-intrusive Overlay Controls in Landscape
                 AnimatedVisibility(
                     visible = areControlsVisible,
                     enter = fadeIn(),
@@ -146,7 +162,7 @@ fun PlayerScreen(
                     )
                 }
 
-                if (isLoading && errorMessage == null) {
+                if (isLoading && errorMessage == null && !isPermanentEmbedRestriction) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -158,9 +174,9 @@ fun PlayerScreen(
                 }
             }
         } else {
-            // Portrait Layout: Fixed Height Top Bar + 16:9 Player Container + Separate Info & Action Section Below
+            // Portrait Layout
             Column(modifier = Modifier.fillMaxSize()) {
-                // Fixed Height Top Bar
+                // Top Bar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -232,24 +248,33 @@ fun PlayerScreen(
                     }
                 }
 
-                // 16:9 Video Player Box (No overlay buttons blocking video player controls)
+                // 16:9 Video Box
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(16f / 9f)
                         .background(Color.Black)
                 ) {
-                    PlayerCore(
-                        currentChannel = currentChannel,
-                        retryTrigger = retryTrigger,
-                        onLoadingChanged = { isLoading = it },
-                        onError = { err ->
-                            errorMessage = err
-                            isLoading = false
-                        }
-                    )
+                    if (isPermanentEmbedRestriction) {
+                        ExternalFallbackComponent(
+                            channel = currentChannel,
+                            modifier = Modifier.fillMaxSize(),
+                            customMessage = if (errorCode == 101 || errorCode == 150) "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
+                        )
+                    } else {
+                        PlayerCore(
+                            currentChannel = currentChannel,
+                            retryTrigger = retryTrigger,
+                            onLoadingChanged = { isLoading = it },
+                            onError = { code, err ->
+                                errorCode = code
+                                errorMessage = err
+                                isLoading = false
+                            }
+                        )
+                    }
 
-                    if (isLoading && errorMessage == null) {
+                    if (isLoading && errorMessage == null && !isPermanentEmbedRestriction) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -261,7 +286,7 @@ fun PlayerScreen(
                     }
                 }
 
-                // Portrait Channel Info, Status & Isolated Switcher Controls (Below Video Area)
+                // Channel Info & Actions Section Below Video Area
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -313,7 +338,6 @@ fun PlayerScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Channel Switcher & Actions Below Video
                     Text(
                         text = "切換頻道",
                         style = MaterialTheme.typography.titleMedium,
@@ -350,7 +374,6 @@ fun PlayerScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Open Official Link Button
                     OutlinedButton(
                         onClick = { launchOfficialUrl(context, currentChannel.officialUrl) },
                         modifier = Modifier.fillMaxWidth(),
@@ -369,63 +392,65 @@ fun PlayerScreen(
             }
         }
 
-        // Error State Banner
-        errorMessage?.let { errorText ->
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                color = Color(0xEE1E1E1E),
-                shape = RoundedCornerShape(12.dp),
-                shadowElevation = 8.dp
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
+        // Temporary Network Error State Banner (hidden for permanent embed restrictions)
+        if (errorMessage != null && !isPermanentEmbedRestriction) {
+            errorMessage?.let { errorText ->
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    color = Color(0xEE1E1E1E),
+                    shape = RoundedCornerShape(12.dp),
+                    shadowElevation = 8.dp
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(16.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = null,
-                            tint = Color(0xFFFFB300),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = errorText,
-                            color = Color.White,
-                            fontSize = 14.sp,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedButton(
-                            onClick = { launchOfficialUrl(context, currentChannel.officialUrl) },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("開啟官方觀看", fontSize = 12.sp)
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = Color(0xFFFFB300),
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = errorText,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
 
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        Button(
-                            onClick = { retryTrigger++ },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("重試", fontSize = 12.sp)
+                            OutlinedButton(
+                                onClick = { launchOfficialUrl(context, currentChannel.officialUrl) },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                            ) {
+                                Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("開啟官方觀看", fontSize = 12.sp)
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Button(
+                                onClick = { retryTrigger++ },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("重試", fontSize = 12.sp)
+                            }
                         }
                     }
                 }
@@ -530,7 +555,7 @@ private fun PlayerCore(
     currentChannel: Channel,
     retryTrigger: Int,
     onLoadingChanged: (Boolean) -> Unit,
-    onError: (String) -> Unit
+    onError: (Int, String) -> Unit
 ) {
     key(currentChannel.id, retryTrigger) {
         when (currentChannel.type) {
@@ -543,19 +568,19 @@ private fun PlayerCore(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    onError("頻道缺少有效的 YouTube 影片 ID")
+                    onError(-1, "頻道缺少有效的 YouTube 影片 ID")
                 }
             }
             StreamType.HLS -> {
                 if (!currentChannel.streamUrl.isNullOrEmpty()) {
                     HlsPlayerComponent(
                         streamUrl = currentChannel.streamUrl,
-                        onError = onError,
+                        onError = { err -> onError(-1, err) },
                         modifier = Modifier.fillMaxSize()
                     )
                     onLoadingChanged(false)
                 } else {
-                    onError("頻道缺少有效的 HLS 直播網址")
+                    onError(-1, "頻道缺少有效的 HLS 直播網址")
                 }
             }
             StreamType.EXTERNAL_WEB -> {
@@ -580,7 +605,6 @@ private fun PlayerControlsOverlayLandscape(
     onNextChannel: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // Top Navigation & Control Bar in Landscape
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -655,7 +679,6 @@ private fun PlayerControlsOverlayLandscape(
             }
         }
 
-        // Quick Channel Switcher Overlay (Left/Right Arrows) in Landscape
         Row(
             modifier = Modifier
                 .fillMaxWidth()

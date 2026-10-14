@@ -1,9 +1,10 @@
 {
-  "version": 2,
-  "updatedAt": "2026-10-14",
+  "version": 3,
+  "updatedAt": "2026-03-31",
   "categories": [
     "全部",
     "新聞",
+    "國際新聞",
     "財經",
     "綜合",
     "兒童",
@@ -18,6 +19,9 @@
       "youtube_video_id": "9iRAqBMakXY",
       "official_url": "https://news.ttv.com.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/TTV_News_logo.png/200px-TTV_News_logo.png",
       "number": 8,
       "description": "台視新聞台 24小時線上直播"
@@ -30,6 +34,9 @@
       "youtube_video_id": "pM-1ytfQhos",
       "official_url": "https://www.daai.tv/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 9,
       "description": "大愛電視 24小時線上直播"
@@ -42,6 +49,9 @@
       "youtube_video_id": "TCnaIE_SAtM",
       "official_url": "https://www.ctv.com.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/CTV_Logo.svg/200px-CTV_Logo.svg.png",
       "number": 10,
       "description": "中視新聞台 24小時線上直播"
@@ -53,9 +63,26 @@
       "type": "external_web",
       "official_url": "https://www.youtube.com/watch?v=C6gYqSHLRw4",
       "embeddable": false,
+      "status": "embed_disabled",
+      "status_message": "公視官方影片限制內嵌播放，提供官方觀看連結",
+      "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 13,
       "description": "公共電視 網路直播 (官方網頁觀看)"
+    },
+    {
+      "id": "nhk_world_japan",
+      "name": "NHK WORLD-JAPAN",
+      "category": "國際新聞",
+      "type": "external_web",
+      "official_url": "https://www3.nhk.or.jp/nhkworld/en/live_tv/",
+      "embeddable": false,
+      "status": "embed_disabled",
+      "status_message": "NHK 官方免費英語國際頻道，無第三方 App 內嵌授權，引導至官方直播網頁觀看",
+      "last_verified": "2026-03-31",
+      "logo_url": "https://www3.nhk.or.jp/nhkworld/common/assets/parts/img/logo.png",
+      "number": 14,
+      "description": "NHK WORLD-JAPAN 免費英語國際新聞直播"
     },
     {
       "id": "ebc_yoyo",
@@ -65,6 +92,9 @@
       "youtube_video_id": "BjY_jXI15ks",
       "official_url": "https://yoyo.ebc.net.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 25,
       "description": "YOYO TV 兒童節目 24小時直播"
@@ -77,6 +107,9 @@
       "youtube_video_id": "vr3XyVCR4T0",
       "official_url": "https://gotv.ctitv.com.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 50,
       "description": "中天新聞台 24小時HD線上直播"
@@ -89,6 +122,9 @@
       "youtube_video_id": "V1p33hqPrUk",
       "official_url": "https://news.ebc.net.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 51,
       "description": "東森新聞台 24小時直播"
@@ -101,6 +137,9 @@
       "youtube_video_id": "wM0g8EoUZ_E",
       "official_url": "https://news.cts.com.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/CTS_News_logo.svg/200px-CTS_News_logo.svg.png",
       "number": 52,
       "description": "華視新聞資訊台 CH52 LIVE直播"
@@ -113,6 +152,9 @@
       "youtube_video_id": "ylYJSBUgaMA",
       "official_url": "https://www.ftvnews.com.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/FTV_News_Logo.png/200px-FTV_News_Logo.png",
       "number": 53,
       "description": "民視新聞台 24小時直播"
@@ -125,6 +167,9 @@
       "youtube_video_id": "yeYC0mbSIOo",
       "official_url": "https://www.setn.com/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 54,
       "description": "三立新聞台 24小時直播"
@@ -137,6 +182,9 @@
       "youtube_video_id": "2mCSYvcfhtc",
       "official_url": "https://news.tvbs.com.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TVBS_News_logo.png/200px-TVBS_News_logo.png",
       "number": 55,
       "description": "TVBS新聞台 24小時直播"
@@ -149,6 +197,9 @@
       "youtube_video_id": "AEBeWMM1atA",
       "official_url": "https://fnc.ebc.net.tw/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 57,
       "description": "東森財經新聞台 24小時直播"
@@ -161,6 +212,9 @@
       "youtube_video_id": "pF507BLtbqU",
       "official_url": "https://www.setn.com/",
       "embeddable": true,
+      "status": "playable",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2026-03-31",
       "logo_url": "",
       "number": 88,
       "description": "三立財經iNEWS 24小時直播"
