@@ -1,7 +1,22 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 }
+
+val gitCommitSha: String = try {
+    val process = ProcessBuilder("git", "rev-parse", "--short", "HEAD").start()
+    process.inputStream.bufferedReader().readText().trim().ifEmpty { "unknown" }
+} catch (e: Exception) {
+    "unknown"
+}
+
+val buildTime: String = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").apply {
+    timeZone = TimeZone.getTimeZone("UTC")
+}.format(Date())
 
 android {
     namespace = "com.taiwanfreetv.app"
@@ -11,8 +26,11 @@ android {
         applicationId = "com.taiwanfreetv.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
+
+        buildConfigField("String", "GIT_COMMIT_SHA", "\"$gitCommitSha\"")
+        buildConfigField("String", "BUILD_TIME", "\"$buildTime\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -38,6 +56,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.taiwanfreetv.app.BuildConfig
 import com.taiwanfreetv.app.data.model.Channel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -63,12 +64,19 @@ fun HomeScreen(
                     modifier = Modifier.size(32.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "台灣免費第四台",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
+                Column {
+                    Text(
+                        text = "台灣免費第四台",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.GIT_COMMIT_SHA})",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray
+                    )
+                }
             }
 
             // Search Bar
