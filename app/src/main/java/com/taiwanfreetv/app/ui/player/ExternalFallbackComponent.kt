@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -51,7 +52,7 @@ fun ExternalFallbackComponent(
         modifier = modifier
             .fillMaxSize()
             .background(Color(0xFF1A1A1A))
-            .padding(24.dp),
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -59,30 +60,31 @@ fun ExternalFallbackComponent(
             imageVector = Icons.Default.OpenInBrowser,
             contentDescription = "開啟外部頁面",
             tint = Color(0xFFFFB300),
-            modifier = Modifier.size(64.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = channel.name,
-            style = MaterialTheme.typography.titleLarge,
-            color = Color.White
+            modifier = Modifier.size(40.dp)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "此頻道官方來源暫不允許 App 內嵌播放。\n請點擊下方按鈕開啟官方免費直播網頁觀看。",
-            style = MaterialTheme.typography.bodyMedium,
+            text = channel.name,
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.White
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "此頻道官方來源限制 App 內嵌播放。\n請點擊下方按鈕開啟官方免費直播頁觀看。",
+            style = MaterialTheme.typography.bodySmall,
             color = Color.LightGray,
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = { launchOfficialUrl(context, channel.officialUrl) },
+            modifier = Modifier.fillMaxWidth(0.85f),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF1E88E5),
                 contentColor = Color.White
@@ -91,10 +93,10 @@ fun ExternalFallbackComponent(
             Icon(
                 imageVector = Icons.Default.OpenInBrowser,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.size(8.dp))
-            Text(text = "開啟官方直播網頁", fontSize = 16.sp)
+            Spacer(modifier = Modifier.size(6.dp))
+            Text(text = "開啟官方直播網頁", fontSize = 14.sp)
         }
     }
 }

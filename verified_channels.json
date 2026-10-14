@@ -1,112 +1,145 @@
 [
   {
-    "id": "ebc_news",
-    "name": "東森新聞",
-    "category": "新聞",
-    "type": "youtube_iframe",
-    "youtube_video_id": null,
-    "official_url": "https://news.ebc.net.tw/",
-    "embeddable": true,
-    "title": "Evgeny  - YouTube"
-  },
-  {
-    "id": "tvbs_news",
-    "name": "TVBS新聞",
-    "category": "新聞",
-    "type": "youtube_iframe",
-    "youtube_video_id": "m_dhMSvUCIc",
-    "official_url": "https://news.tvbs.com.tw/",
-    "embeddable": true,
-    "title": " - YouTube"
-  },
-  {
-    "id": "cts_news",
-    "name": "華視新聞",
-    "category": "新聞",
-    "type": "youtube_iframe",
-    "youtube_video_id": null,
-    "official_url": "https://news.cts.com.tw/",
-    "embeddable": true,
-    "title": "HTTP Error 404: Not Found"
-  },
-  {
-    "id": "ctv_news",
-    "name": "中視新聞",
-    "category": "新聞",
-    "type": "youtube_iframe",
-    "youtube_video_id": "VGpERFOqH7Q",
-    "official_url": "https://www.ctv.com.tw/",
-    "embeddable": true,
-    "title": " - YouTube"
-  },
-  {
     "id": "ttv_news",
-    "name": "台視新聞",
+    "name": "台視新聞台",
     "category": "新聞",
     "type": "youtube_iframe",
-    "youtube_video_id": "jRlcwLmp0Bs",
+    "youtube_video_id": "9iRAqBMakXY",
     "official_url": "https://news.ttv.com.tw/",
     "embeddable": true,
-    "title": " - YouTube"
-  },
-  {
-    "id": "ftv_news",
-    "name": "民視新聞",
-    "category": "新聞",
-    "type": "youtube_iframe",
-    "youtube_video_id": "D_YeV3_-oO0",
-    "official_url": "https://www.ftvnews.com.tw/",
-    "embeddable": true,
-    "title": " - YouTube"
-  },
-  {
-    "id": "set_news",
-    "name": "三立新聞",
-    "category": "新聞",
-    "type": "youtube_iframe",
-    "youtube_video_id": "exyvZtJTKMQ",
-    "official_url": "https://www.setn.com/",
-    "embeddable": true,
-    "title": " - YouTube"
-  },
-  {
-    "id": "ebc_financial",
-    "name": "東森財經新聞",
-    "category": "財經",
-    "type": "youtube_iframe",
-    "youtube_video_id": null,
-    "official_url": "https://fnc.ebc.net.tw/",
-    "embeddable": true,
-    "title": "HTTP Error 404: Not Found"
-  },
-  {
-    "id": "pts_main",
-    "name": "公視新聞/公視",
-    "category": "綜合",
-    "type": "youtube_iframe",
-    "youtube_video_id": "C6gYqSHLRw4",
-    "official_url": "https://www.pts.org.tw/",
-    "embeddable": true,
-    "title": "公共電視 13頻道 網路直播 PTS Live - YouTube"
+    "verified_status": "PASS",
+    "title": "台視新聞台HD 24 小時線上直播｜TAIWAN TTV NEWS HD (Live)｜台湾のTTV ニュースHD (生放送)｜대만 뉴스 라이브"
   },
   {
     "id": "daai_tv",
-    "name": "大愛電視",
+    "name": "大愛電視台",
     "category": "綜合",
     "type": "youtube_iframe",
-    "youtube_video_id": "fjPstEA8iB4",
+    "youtube_video_id": "pM-1ytfQhos",
     "official_url": "https://www.daai.tv/",
     "embeddable": true,
-    "title": " - YouTube"
+    "verified_status": "PASS",
+    "title": "大愛一臺HD Live 全球直播 | 現正播映：大愛醫生館 (6902集)"
+  },
+  {
+    "id": "ctv_news",
+    "name": "中視新聞台",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "TCnaIE_SAtM",
+    "official_url": "https://www.ctv.com.tw/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "中視新聞LIVE直播頻道24小時線上直播｜Taiwan CTV news HD 24h live news |台湾のCTV ニュースHD 대만 24시간 뉴스채널  | (生放送)"
+  },
+  {
+    "id": "pts_main",
+    "name": "公視主頻道",
+    "category": "綜合",
+    "type": "external_web",
+    "youtube_video_id": null,
+    "official_url": "https://www.youtube.com/watch?v=C6gYqSHLRw4",
+    "embeddable": false,
+    "verified_status": "FALLBACK_EXTERNAL",
+    "title": "公視主頻道 (官方限制內嵌，降級為官方網頁觀看)"
   },
   {
     "id": "ebc_yoyo",
-    "name": "YOYO TV",
+    "name": "YOYO TV 幼兒台",
     "category": "兒童",
     "type": "youtube_iframe",
-    "youtube_video_id": null,
+    "youtube_video_id": "BjY_jXI15ks",
     "official_url": "https://yoyo.ebc.net.tw/",
     "embeddable": true,
-    "title": "HTTP Error 404: Not Found"
+    "verified_status": "PASS",
+    "title": "馬不停蹄🐎YOYO金曲✕熱門卡通✨24HR不間斷｜LIVE｜唱跳｜金曲｜兒歌｜MV｜Kids Songs"
+  },
+  {
+    "id": "cti_news",
+    "name": "中天新聞台",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "vr3XyVCR4T0",
+    "official_url": "https://gotv.ctitv.com.tw/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "【#中天新聞不斷電直播Live】 CTI中天新聞24小時HD新聞直播 │ CTITV Taiwan News HD Live｜台湾のHDニュース放送｜ 대만 HD 뉴스 방송@中天電視CtiTv"
+  },
+  {
+    "id": "ebc_news",
+    "name": "東森新聞台",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "V1p33hqPrUk",
+    "official_url": "https://news.ebc.net.tw/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "🔴東森新聞 51 頻道 24 小時直播｜Taiwan EBC 24h live news｜台湾 EBC ニュース24 時間オンライン放送｜대만 뉴스 생방송"
+  },
+  {
+    "id": "cts_news",
+    "name": "華視新聞資訊台",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "wM0g8EoUZ_E",
+    "official_url": "https://news.cts.com.tw/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "#LIVE: 華視新聞直播 CH52 | Taiwan CTS News | 台湾のニュースを24時間配信 | 대만 24시간 뉴스채널 | 24小時 線上看 LIVE新聞【On Air】"
+  },
+  {
+    "id": "ftv_news",
+    "name": "民視新聞台",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "ylYJSBUgaMA",
+    "official_url": "https://www.ftvnews.com.tw/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "🟢LIVE 民視新聞24小時直播  FTV 新聞直播｜Taiwan News Live｜台湾ニュース Live｜대만 뉴스 방송 Live @FTV_News"
+  },
+  {
+    "id": "set_news",
+    "name": "三立新聞台",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "yeYC0mbSIOo",
+    "official_url": "https://www.setn.com/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "🔴LIVE 三立新聞 CH54頻道｜台灣新聞 24 小時直播｜Taiwan SET News 24h Live｜@setnews-ch54"
+  },
+  {
+    "id": "tvbs_news",
+    "name": "TVBS新聞台",
+    "category": "新聞",
+    "type": "youtube_iframe",
+    "youtube_video_id": "2mCSYvcfhtc",
+    "official_url": "https://news.tvbs.com.tw/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "【ON AIR】TVBS新聞台 24 小時直播 |Taiwan News Live|台湾TVBS NEWS世界中のニュースを24時間配信中 | 대만 TVBS뉴스 24시간 생방송"
+  },
+  {
+    "id": "ebc_financial",
+    "name": "東森財經新聞台",
+    "category": "財經",
+    "type": "youtube_iframe",
+    "youtube_video_id": "AEBeWMM1atA",
+    "official_url": "https://fnc.ebc.net.tw/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "【看盤不中斷】EBC東森財經股市24小時直播｜Taiwan EBC Financial News 24hr Live｜台湾 EBC 金融ニュース24 時間オンライン放送｜대만 뉴스 생방송"
+  },
+  {
+    "id": "set_inews",
+    "name": "三立財經iNEWS",
+    "category": "財經",
+    "type": "youtube_iframe",
+    "youtube_video_id": "pF507BLtbqU",
+    "official_url": "https://www.setn.com/",
+    "embeddable": true,
+    "verified_status": "PASS",
+    "title": "🔴LIVE 三立財經 iNEWS ｜台灣財經新聞直播｜SET Finance News |ニュースオンライン生放送   @三立財經iNEWS"
   }
 ]

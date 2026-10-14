@@ -1,49 +1,46 @@
 # 台灣免費第四台 App 測試與驗收紀錄 (Test Report)
 
-## 一、測試環境 (Test Environment)
-- **Gradle 版本**: 8.8
-- **Kotlin 版本**: 1.9.22
+## 一、版本與編譯資訊 (Version & Build Details)
+- **App Version**: v1.1.0
+- **Version Code**: 2
+- **Git Commit SHA**: `$(git rev-parse --short HEAD)`
+- **Gradle Version**: 8.8
 - **Compile SDK / Target SDK**: 34 (Android 14)
 - **Min SDK**: 24 (Android 7.0)
-- **Build Target**: Debug APK (`app/build/outputs/apk/debug/app-debug.apk`)
+- **Build Output**: Debug APK (`app/build/outputs/apk/debug/app-debug.apk`)
+- **GitHub Actions CI Artifact**: `app-v1.1.0-debug-<SHA>`
 
 ---
 
 ## 二、單元測試結果 (Unit Test Results)
 
-### 執行命令: `gradle test`
+### 執行命令: `./gradlew clean test assembleDebug`
 
 1. **ChannelRepositoryTest**:
-   - `testParseConfigJson`: PASSED
-   - 驗證動態 JSON 解析，含 `youtube_iframe` 與 `hls` 串流型態。
+   - `testParseConfigJson`: **PASSED**
+   - 驗證動態 JSON 解析，含 `youtube_iframe` 與 `external_web` 串流型態。
 
 2. **UserPreferencesLogicTest**:
-   - `testFavoriteFiltering`: PASSED (驗證收藏清單過濾)
-   - `testCategoryAndSearchFiltering`: PASSED (驗證分類切換與關鍵字搜尋)
-   - `testCustomOrdering`: PASSED (驗證頻道自訂排序)
+   - `testFavoriteFiltering`: **PASSED** (驗證收藏清單過濾)
+   - `testCategoryAndSearchFiltering`: **PASSED** (驗證分類切換與關鍵字搜尋)
+   - `testCustomOrdering`: **PASSED** (驗證頻道自訂排序)
 
 ---
 
-## 三、主要功能驗證清單 (Feature Verification Checklist)
+## 三、主要修復與功能驗證清單 (Feature Verification Checklist)
 
 | 功能項目 | 需求層級 | 驗證項目 | 測試結果 |
 | :--- | :--- | :--- | :--- |
-| **頻道清單與分類** | P1 | 首頁分類選單切換、顯示頻道名稱、台號及簡介 | **PASS** |
-| **點擊頻道播放** | P1 | 點選頻道卡片切換至全螢幕播放頁面 | **PASS** |
-| **YouTube 官方直播** | P1 | 遵守 YouTube 廣告、標示、Referer 規範，透過官方 HTML5/IFrame 播放 | **PASS** |
-| **HLS ExoPlayer 播放** | P1 | 使用 AndroidX Media3 ExoPlayer 進行多碼率 HLS 直播串流 | **PASS** |
-| **切台功能** | P1 | 支援上一台/下一台按鈕切換及側邊頻道選單點選切換 | **PASS** |
-| **收藏頻道** | P1 | 點擊愛心按鈕將頻道加入/移除收藏，分類可過濾「收藏」頻道 | **PASS** |
-| **記憶上次觀看** | P1 | 透過 DataStore 保存最後觀看頻道 ID，重新開啟 App 自動載入 | **PASS** |
-| **串流異常與重試** | P1 | 播放失敗時顯示黃色警示條與重試按鈕 | **PASS** |
-| **降級外部網頁** | P1 | 不允許內嵌之頻道提供「開啟官方直播網頁」按鈕，呼叫 Intent 開啟外部瀏覽器 | **PASS** |
-| **頻道搜尋** | P2 | 首頁搜尋欄輸入關鍵字或台號動態過濾頻道 | **PASS** |
-| **遠端設定更新** | P2 | 支援從 Asset 本機或 HTTP Remote JSON 更新頻道設定 | **PASS** |
-| **Android TV 遙控器** | P2 | 支援 D-Pad 上下鍵快速切台 (KEYCODE_CHANNEL_UP / KEYCODE_DPAD_UP/DOWN) | **PASS** |
-
----
-
-## 四、產出 Artifact 驗證 (Build Artifact Verification)
-- **APK 檔案路徑**: `app/build/outputs/apk/debug/app-debug.apk`
-- **檔案大小**: 19.28 MB
-- **編譯狀態**: SUCCESS (60 Gradle tasks executed)
+| **版本與分支整合** | P0 | 將 PR #3 修復整合至 master，新增 `versionName` (1.1.0)、`versionCode` (2)、`GIT_COMMIT_SHA` 與 `BUILD_TIME` | **PASS** |
+| **CI Workflow Artifact** | P0 | GitHub Actions 打包產物名稱包含版本與 Commit SHA (`app-v1.1.0-debug-<SHA>`) | **PASS** |
+| **YouTube 152-4 錯誤修復** | P0 | loadDataWithBaseURL 設定為 `https://taiwanfreetv.app`，帶入 `X-Requested-With: com.taiwanfreetv.app` 與 Referer | **PASS** |
+| **YouTube IFrame API 監聽** | P0 | 透過 JS Bridge 介面 (`@JavascriptInterface`) 監聽 onReady、onStateChange 與 onError (區分 152-4 與 153) | **PASS** |
+| **WebView 設定與生命週期** | P0 | 啟用 Cookie/DOM Storage/JavaScript，切台/離頁時 evaluation 停止並銷毀 WebView | **PASS** |
+| **頻道來源全面檢測** | P0 | 逐一實測 13 個預設頻道 24 小時直播，更新台視, 大愛, 中視, 華視, 民視, 三立, TVBS, 東森財經, 中天, 三立財經, YOYO TV 影片 ID | **PASS** |
+| **不允許內嵌頻道降級** | P0 | 公視主頻道 (`pts_main`) 設定為 `external_web` 模式，自動降級提供「開啟官方直播網頁」按鈕 | **PASS** |
+| **頻道號碼修正與測試項目清理** | P0 | 移除 `hls_sample_demo` 測試串流與重複東森頻道，修正台號 (台視 CH8, 大愛 CH9, 中視 CH10, 公視 CH13, YOYO CH25, 中天 CH50, 東森 CH51, 華視 CH52, 民視 CH53, 三立 CH54, TVBS CH55, 東森財經 CH57, 三立財經 CH88) | **PASS** |
+| **頂部控制列防重疊 UI** | P1 | 返回鍵固定左側，頻道名稱單行過 long 省略號，右側收藏及選單，直向模式固定導覽列高 56.dp 避開重疊 | **PASS** |
+| **播放區域 16:9 比例與響應式** | P1 | 直向模式 YouTube 播放器使用 16:9 比例，下方獨立放置頻道資訊與切台按鈕，不遮蔽播放器控制 | **PASS** |
+| **橫向模式合規 Layout** | P1 | 影片最大化可視面積，浮動控制列可自動隱藏，符合 YouTube 播放器使用規範不遮蔽標誌或廣告 | **PASS** |
+| **外部網頁模式精簡 UI** | P1 | 提示圖示與文字精簡，官方觀看與切台按鈕清晰可見無截字 | **PASS** |
+| **載入與錯誤處理** | P1 | 載入中顯示 CircularProgressIndicator；失敗時顯示明確繁體中文錯誤訊息、重試按鈕及開啟官方觀看按鈕 | **PASS** |
