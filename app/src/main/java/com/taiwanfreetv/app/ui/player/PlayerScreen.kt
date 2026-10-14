@@ -1,5 +1,6 @@
 package com.taiwanfreetv.app.ui.player
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -8,18 +9,20 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -28,11 +31,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.taiwanfreetv.app.data.model.Channel
 import com.taiwanfreetv.app.data.model.StreamType
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,127 +54,574 @@ fun PlayerScreen(
     onToggleFavorite: (Channel) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     var isDrawerOpen by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
     var retryTrigger by remember { mutableStateOf(0) }
+    var areControlsVisible by remember { mutableStateOf(true) }
+    var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
-    // Reset error when channel changes or retry is triggered
+    // Reset error & loading when channel changes or retry is triggered
     LaunchedEffect(currentChannel.id, retryTrigger) {
         errorMessage = null
+        isLoading = true
+        areControlsVisible = true
+        lastInteractionTime = System.currentTimeMillis()
+    }
+
+    // Auto-hide controls after 3.5 seconds of inactivity
+    LaunchedEffect(areControlsVisible, lastInteractionTime, isDrawerOpen) {
+        if (areControlsVisible && !isDrawerOpen) {
+            delay(3500)
+            areControlsVisible = false
+        }
+    }
+
+    val onUserInteract = {
+        lastInteractionTime = System.currentTimeMillis()
+        if (!areControlsVisible) {
+            areControlsVisible = true
+        }
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
+            .statusBarsPadding()
+            .navigationBarsPadding()
     ) {
-        // Video Player Dispatcher based on StreamType
-        key(currentChannel.id, retryTrigger) {
-            when (currentChannel.type) {
-                StreamType.YOUTUBE_IFRAME -> {
-                    if (!currentChannel.youtubeVideoId.isNullOrEmpty()) {
-                        YouTubeIFramePlayer(
-                            videoId = currentChannel.youtubeVideoId,
-                            onError = { err -> errorMessage = err },
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        errorMessage = "頻道缺少有效的 YouTube 影片 ID"
+        if (isLandscape) {
+            // Landscape: Full screen video area
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        areControlsVisible = !areControlsVisible
+                        if (areControlsVisible) lastInteractionTime = System.currentTimeMillis()
                     }
-                }
-                StreamType.HLS -> {
-                    if (!currentChannel.streamUrl.isNullOrEmpty()) {
-                        HlsPlayerComponent(
-                            streamUrl = currentChannel.streamUrl,
-                            onError = { err -> errorMessage = err },
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        errorMessage = "頻道缺少有效的 HLS 直播網址"
+            ) {
+                PlayerCore(
+                    currentChannel = currentChannel,
+                    retryTrigger = retryTrigger,
+                    onLoadingChanged = { isLoading = it },
+                    onError = { err ->
+                        errorMessage = err
+                        isLoading = false
                     }
-                }
-                StreamType.EXTERNAL_WEB -> {
-                    ExternalFallbackComponent(
-                        channel = currentChannel,
-                        modifier = Modifier.fillMaxSize()
+                )
+
+                // Overlay Controls in Landscape
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = areControlsVisible,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    PlayerControlsOverlay(
+                        currentChannel = currentChannel,
+                        favoriteIds = favoriteIds,
+                        onBackClick = onBackClick,
+                        onToggleFavorite = { onToggleFavorite(currentChannel) },
+                        onToggleDrawer = {
+                            isDrawerOpen = !isDrawerOpen
+                            onUserInteract()
+                        },
+                        onPreviousChannel = {
+                            onPreviousChannel()
+                            onUserInteract()
+                        },
+                        onNextChannel = {
+                            onNextChannel()
+                            onUserInteract()
+                        }
                     )
+                }
+
+                if (isLoading && errorMessage == null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0x66000000)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF1E88E5))
+                    }
+                }
+            }
+        } else {
+            // Portrait Layout: Video Box at Top + Info Section Below
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f)
+                        .background(Color.Black)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            areControlsVisible = !areControlsVisible
+                            if (areControlsVisible) lastInteractionTime = System.currentTimeMillis()
+                        }
+                ) {
+                    PlayerCore(
+                        currentChannel = currentChannel,
+                        retryTrigger = retryTrigger,
+                        onLoadingChanged = { isLoading = it },
+                        onError = { err ->
+                            errorMessage = err
+                            isLoading = false
+                        }
+                    )
+
+                    // Overlay Controls in Portrait Video Box
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = areControlsVisible,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        PlayerControlsOverlay(
+                            currentChannel = currentChannel,
+                            favoriteIds = favoriteIds,
+                            onBackClick = onBackClick,
+                            onToggleFavorite = { onToggleFavorite(currentChannel) },
+                            onToggleDrawer = {
+                                isDrawerOpen = !isDrawerOpen
+                                onUserInteract()
+                            },
+                            onPreviousChannel = {
+                                onPreviousChannel()
+                                onUserInteract()
+                            },
+                            onNextChannel = {
+                                onNextChannel()
+                                onUserInteract()
+                            }
+                        )
+                    }
+
+                    if (isLoading && errorMessage == null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0x66000000)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Color(0xFF1E88E5))
+                        }
+                    }
+                }
+
+                // Portrait Channel Info & Quick Actions Details (Below Video)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .background(Color(0xFF121212))
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Surface(
+                                color = Color(0xFF1E88E5),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = if (currentChannel.number > 0) "CH${currentChannel.number}" else currentChannel.category,
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = currentChannel.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+
+                        val isFav = favoriteIds.contains(currentChannel.id)
+                        IconButton(onClick = { onToggleFavorite(currentChannel) }) {
+                            Icon(
+                                imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "收藏頻道",
+                                tint = if (isFav) Color.Red else Color.Gray
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = currentChannel.description ?: "官方 24 小時實時線上直播",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.LightGray
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Open Official Link Button
+                    OutlinedButton(
+                        onClick = { launchOfficialUrl(context, currentChannel.officialUrl) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1E88E5)),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF1E88E5)))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.OpenInBrowser,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "開啟電視台官方觀看網頁", fontSize = 14.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    HorizontalDivider(color = Color(0xFF222222))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "快速切台",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = onPreviousChannel,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222))
+                        ) {
+                            Icon(Icons.Default.ChevronLeft, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("上一台")
+                        }
+
+                        Button(
+                            onClick = onNextChannel,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF222222))
+                        ) {
+                            Text("下一台")
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(Icons.Default.ChevronRight, contentDescription = null)
+                        }
+                    }
                 }
             }
         }
 
-        // Overlay Controller Bar (Top)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier
-                        .background(Color(0x99000000), CircleShape)
-                        .focusable()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "返回首頁",
-                        tint = Color.White
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Surface(
-                    color = Color(0x99000000),
-                    shape = RoundedCornerShape(20.dp)
+        // Error State Banner & Dialog Fallback
+        errorMessage?.let { errorText ->
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                color = Color(0xEE1E1E1E),
+                shape = RoundedCornerShape(12.dp),
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
                 ) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = if (currentChannel.number > 0) "CH${currentChannel.number} ${currentChannel.name}" else currentChannel.name,
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFFFB300),
+                            modifier = Modifier.size(24.dp)
                         )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = errorText,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedButton(
+                            onClick = { launchOfficialUrl(context, currentChannel.officialUrl) },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                        ) {
+                            Icon(Icons.Default.OpenInBrowser, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("開啟官方觀看", fontSize = 12.sp)
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Button(
+                            onClick = { retryTrigger++ },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
+                        ) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("重試", fontSize = 12.sp)
+                        }
                     }
                 }
             }
+        }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Favorite Button
-                val isFav = favoriteIds.contains(currentChannel.id)
-                IconButton(
-                    onClick = { onToggleFavorite(currentChannel) },
+        // Collapsible Side Channel Drawer
+        androidx.compose.animation.AnimatedVisibility(
+            visible = isDrawerOpen,
+            enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+            exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(280.dp),
+                color = Color(0xEE121212)
+            ) {
+                Column(
                     modifier = Modifier
-                        .background(Color(0x99000000), CircleShape)
-                        .focusable()
+                        .fillMaxSize()
+                        .padding(16.dp)
                 ) {
-                    Icon(
-                        imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "收藏頻道",
-                        tint = if (isFav) Color.Red else Color.White
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "頻道選單",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(onClick = { isDrawerOpen = false }) {
+                            Icon(Icons.Default.ChevronRight, contentDescription = "關閉選單", tint = Color.White)
+                        }
+                    }
+
+                    HorizontalDivider(color = Color.DarkGray, modifier = Modifier.padding(vertical = 8.dp))
+
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(channels, key = { it.id }) { ch ->
+                            val isSelected = ch.id == currentChannel.id
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        onChannelSelect(ch)
+                                        isDrawerOpen = false
+                                    }
+                                    .focusable(),
+                                color = if (isSelected) Color(0xFF1E88E5) else Color(0xFF222222)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = if (ch.number > 0) "CH${ch.number} ${ch.name}" else ch.name,
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = ch.category,
+                                            color = Color.LightGray,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    if (isSelected) {
+                                        Text(
+                                            text = "播放中",
+                                            color = Color.White,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlayerCore(
+    currentChannel: Channel,
+    retryTrigger: Int,
+    onLoadingChanged: (Boolean) -> Unit,
+    onError: (String) -> Unit
+) {
+    key(currentChannel.id, retryTrigger) {
+        when (currentChannel.type) {
+            StreamType.YOUTUBE_IFRAME -> {
+                if (!currentChannel.youtubeVideoId.isNullOrEmpty()) {
+                    YouTubeIFramePlayer(
+                        videoId = currentChannel.youtubeVideoId,
+                        onLoadingChanged = onLoadingChanged,
+                        onError = onError,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    onError("頻道缺少有效的 YouTube 影片 ID")
+                }
+            }
+            StreamType.HLS -> {
+                if (!currentChannel.streamUrl.isNullOrEmpty()) {
+                    HlsPlayerComponent(
+                        streamUrl = currentChannel.streamUrl,
+                        onError = onError,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    onLoadingChanged(false)
+                } else {
+                    onError("頻道缺少有效的 HLS 直播網址")
+                }
+            }
+            StreamType.EXTERNAL_WEB -> {
+                onLoadingChanged(false)
+                ExternalFallbackComponent(
+                    channel = currentChannel,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlayerControlsOverlay(
+    currentChannel: Channel,
+    favoriteIds: Set<String>,
+    onBackClick: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onToggleDrawer: () -> Unit,
+    onPreviousChannel: () -> Unit,
+    onNextChannel: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Top Navigation & Control Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0x88000000))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Fixed Left: Back Button
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier
+                    .background(Color(0x99000000), CircleShape)
+                    .focusable()
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "返回首頁",
+                    tint = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            // Middle: Channel Name (using weight and single line ellipsis)
+            Surface(
+                modifier = Modifier.weight(1f),
+                color = Color(0x99000000),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = if (currentChannel.number > 0) "CH${currentChannel.number} ${currentChannel.name}" else currentChannel.name,
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
+            }
 
-                Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
-                // Toggle Channel List Drawer
-                IconButton(
-                    onClick = { isDrawerOpen = !isDrawerOpen },
-                    modifier = Modifier
-                        .background(Color(0x99000000), CircleShape)
-                        .focusable()
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "頻道選單",
-                        tint = Color.White
-                    )
-                }
+            // Fixed Right: Favorite & Menu Buttons
+            val isFav = favoriteIds.contains(currentChannel.id)
+            IconButton(
+                onClick = onToggleFavorite,
+                modifier = Modifier
+                    .background(Color(0x99000000), CircleShape)
+                    .focusable()
+            ) {
+                Icon(
+                    imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "收藏頻道",
+                    tint = if (isFav) Color.Red else Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            IconButton(
+                onClick = onToggleDrawer,
+                modifier = Modifier
+                    .background(Color(0x99000000), CircleShape)
+                    .focusable()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "頻道選單",
+                    tint = Color.White
+                )
             }
         }
 
@@ -207,127 +661,6 @@ fun PlayerScreen(
                     tint = Color.White,
                     modifier = Modifier.size(32.dp)
                 )
-            }
-        }
-
-        // Error State & Retry Banner
-        errorMessage?.let { errorText ->
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 60.dp, start = 20.dp, end = 20.dp),
-                color = Color(0xDD000000),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = null,
-                        tint = Color(0xFFFFB300)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = errorText,
-                        color = Color.White,
-                        fontSize = 14.sp,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Button(
-                        onClick = { retryTrigger++ },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
-                    ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("重試", fontSize = 12.sp)
-                    }
-                }
-            }
-        }
-
-        // Collapsible Side Channel Drawer
-        AnimatedVisibility(
-            visible = isDrawerOpen,
-            enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-            exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-            modifier = Modifier.align(Alignment.CenterEnd)
-        ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(280.dp),
-                color = Color(0xEE121212)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "頻道選單",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
-                    HorizontalDivider(color = Color.DarkGray)
-
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = 12.dp)
-                    ) {
-                        items(channels, key = { it.id }) { ch ->
-                            val isSelected = ch.id == currentChannel.id
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        onChannelSelect(ch)
-                                        isDrawerOpen = false
-                                    }
-                                    .focusable(),
-                                color = if (isSelected) Color(0xFF1E88E5) else Color(0xFF222222)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = ch.name,
-                                            color = Color.White,
-                                            fontSize = 14.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                        Text(
-                                            text = ch.category,
-                                            color = Color.LightGray,
-                                            fontSize = 12.sp
-                                        )
-                                    }
-                                    if (isSelected) {
-                                        Text(
-                                            text = "播放中",
-                                            color = Color.White,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }

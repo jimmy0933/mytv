@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "updatedAt": "2026-03-31",
+  "version": 2,
+  "updatedAt": "2026-10-14",
   "categories": [
     "全部",
     "新聞",
@@ -11,6 +11,30 @@
   ],
   "channels": [
     {
+      "id": "ttv_news",
+      "name": "台視新聞台",
+      "category": "新聞",
+      "type": "youtube_iframe",
+      "youtube_video_id": "9iRAqBMakXY",
+      "official_url": "https://news.ttv.com.tw/",
+      "embeddable": true,
+      "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/TTV_News_logo.png/200px-TTV_News_logo.png",
+      "number": 8,
+      "description": "台視新聞台 24小時線上直播"
+    },
+    {
+      "id": "daai_tv",
+      "name": "大愛電視台",
+      "category": "綜合",
+      "type": "youtube_iframe",
+      "youtube_video_id": "pM-1ytfQhos",
+      "official_url": "https://www.daai.tv/",
+      "embeddable": true,
+      "logo_url": "",
+      "number": 9,
+      "description": "大愛電視 24小時線上直播"
+    },
+    {
       "id": "ctv_news",
       "name": "中視新聞台",
       "category": "新聞",
@@ -19,20 +43,55 @@
       "official_url": "https://www.ctv.com.tw/",
       "embeddable": true,
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/CTV_Logo.svg/200px-CTV_Logo.svg.png",
-      "number": 51,
+      "number": 10,
       "description": "中視新聞台 24小時線上直播"
     },
     {
-      "id": "tvbs_news",
-      "name": "TVBS新聞台",
+      "id": "pts_main",
+      "name": "公視主頻道",
+      "category": "綜合",
+      "type": "external_web",
+      "official_url": "https://www.youtube.com/watch?v=C6gYqSHLRw4",
+      "embeddable": false,
+      "logo_url": "",
+      "number": 13,
+      "description": "公共電視 網路直播 (官方網頁觀看)"
+    },
+    {
+      "id": "ebc_yoyo",
+      "name": "YOYO TV 幼兒台",
+      "category": "兒童",
+      "type": "youtube_iframe",
+      "youtube_video_id": "BjY_jXI15ks",
+      "official_url": "https://yoyo.ebc.net.tw/",
+      "embeddable": true,
+      "logo_url": "",
+      "number": 25,
+      "description": "YOYO TV 兒童節目 24小時直播"
+    },
+    {
+      "id": "cti_news",
+      "name": "中天新聞台",
       "category": "新聞",
       "type": "youtube_iframe",
-      "youtube_video_id": "2mCSYvcfhtc",
-      "official_url": "https://news.tvbs.com.tw/",
+      "youtube_video_id": "vr3XyVCR4T0",
+      "official_url": "https://gotv.ctitv.com.tw/",
       "embeddable": true,
-      "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TVBS_News_logo.png/200px-TVBS_News_logo.png",
-      "number": 55,
-      "description": "TVBS新聞台 24小時直播"
+      "logo_url": "",
+      "number": 50,
+      "description": "中天新聞台 24小時HD線上直播"
+    },
+    {
+      "id": "ebc_news",
+      "name": "東森新聞台",
+      "category": "新聞",
+      "type": "youtube_iframe",
+      "youtube_video_id": "V1p33hqPrUk",
+      "official_url": "https://news.ebc.net.tw/",
+      "embeddable": true,
+      "logo_url": "",
+      "number": 51,
+      "description": "東森新聞台 24小時直播"
     },
     {
       "id": "cts_news",
@@ -59,23 +118,11 @@
       "description": "民視新聞台 24小時直播"
     },
     {
-      "id": "ttv_news",
-      "name": "台視新聞台",
-      "category": "新聞",
-      "type": "youtube_iframe",
-      "youtube_video_id": "xL0ch83pjK8",
-      "official_url": "https://news.ttv.com.tw/",
-      "embeddable": true,
-      "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/TTV_News_logo.png/200px-TTV_News_logo.png",
-      "number": 8,
-      "description": "台視新聞台 24小時線上直播"
-    },
-    {
       "id": "set_news",
       "name": "三立新聞台",
       "category": "新聞",
       "type": "youtube_iframe",
-      "youtube_video_id": "41yP4L9PzM8",
+      "youtube_video_id": "yeYC0mbSIOo",
       "official_url": "https://www.setn.com/",
       "embeddable": true,
       "logo_url": "",
@@ -83,87 +130,40 @@
       "description": "三立新聞台 24小時直播"
     },
     {
-      "id": "ebc_news",
-      "name": "東森新聞台",
+      "id": "tvbs_news",
+      "name": "TVBS新聞台",
       "category": "新聞",
       "type": "youtube_iframe",
-      "youtube_video_id": "R2aiS3fL56g",
-      "official_url": "https://news.ebc.net.tw/",
+      "youtube_video_id": "2mCSYvcfhtc",
+      "official_url": "https://news.tvbs.com.tw/",
       "embeddable": true,
-      "logo_url": "",
-      "number": 51,
-      "description": "東森新聞台 24小時直播"
+      "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TVBS_News_logo.png/200px-TVBS_News_logo.png",
+      "number": 55,
+      "description": "TVBS新聞台 24小時直播"
     },
     {
       "id": "ebc_financial",
       "name": "東森財經新聞台",
       "category": "財經",
       "type": "youtube_iframe",
-      "youtube_video_id": "W22C1m3O6Q0",
+      "youtube_video_id": "AEBeWMM1atA",
       "official_url": "https://fnc.ebc.net.tw/",
       "embeddable": true,
       "logo_url": "",
       "number": 57,
-      "description": "東森財經新聞台 直播"
+      "description": "東森財經新聞台 24小時直播"
     },
     {
-      "id": "pts_main",
-      "name": "公視主頻道",
-      "category": "綜合",
+      "id": "set_inews",
+      "name": "三立財經iNEWS",
+      "category": "財經",
       "type": "youtube_iframe",
-      "youtube_video_id": "C6gY_4C3Ias",
-      "official_url": "https://www.pts.org.tw/",
+      "youtube_video_id": "pF507BLtbqU",
+      "official_url": "https://www.setn.com/",
       "embeddable": true,
       "logo_url": "",
-      "number": 13,
-      "description": "公共電視 網路直播"
-    },
-    {
-      "id": "daai_tv",
-      "name": "大愛電視台",
-      "category": "綜合",
-      "type": "youtube_iframe",
-      "youtube_video_id": "fjPstEA8iB4",
-      "official_url": "https://www.daai.tv/",
-      "embeddable": true,
-      "logo_url": "",
-      "number": 9,
-      "description": "大愛電視 24小時線上直播"
-    },
-    {
-      "id": "ebc_yoyo",
-      "name": "YOYO TV 幼兒台",
-      "category": "兒童",
-      "type": "youtube_iframe",
-      "youtube_video_id": "x30YOy6vG32",
-      "official_url": "https://yoyo.ebc.net.tw/",
-      "embeddable": true,
-      "logo_url": "",
-      "number": 25,
-      "description": "YOYO TV 兒童節目直播"
-    },
-    {
-      "id": "hls_sample_demo",
-      "name": "官方 HLS 測試直播頻道",
-      "category": "綜合",
-      "type": "hls",
-      "stream_url": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-      "official_url": "https://mux.com/",
-      "embeddable": true,
-      "logo_url": "",
-      "number": 99,
-      "description": "官方 High Quality HLS 串流測試頻道"
-    },
-    {
-      "id": "external_web_sample",
-      "name": "東森新聞 (官方網頁觀看)",
-      "category": "新聞",
-      "type": "external_web",
-      "official_url": "https://news.ebc.net.tw/live",
-      "embeddable": false,
-      "logo_url": "",
-      "number": 100,
-      "description": "非內嵌頻道降級：直接開啟東森官方直播網頁"
+      "number": 88,
+      "description": "三立財經iNEWS 24小時直播"
     }
   ]
 }

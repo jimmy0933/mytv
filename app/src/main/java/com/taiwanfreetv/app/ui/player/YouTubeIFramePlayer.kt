@@ -2,7 +2,11 @@ package com.taiwanfreetv.app.ui.player
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.ViewGroup
+import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -22,14 +26,51 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 
+private class YouTubeJsInterface(
+    private val onReadyCallback: () -> Unit,
+    private val onStateChangeCallback: (Int) -> Unit,
+    private val onErrorCallback: (String) -> Unit
+) {
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    @JavascriptInterface
+    fun onReady() {
+        mainHandler.post {
+            onReadyCallback()
+        }
+    }
+
+    @JavascriptInterface
+    fun onStateChange(state: Int) {
+        mainHandler.post {
+            onStateChangeCallback(state)
+        }
+    }
+
+    @JavascriptInterface
+    fun onError(code: Int) {
+        mainHandler.post {
+            val message = when (code) {
+                2 -> "無效的影片 ID 參數 (錯誤碼 2)"
+                5 -> "HTML5 播放器載入失敗 (錯誤碼 5)"
+                100 -> "影片不存在、已移除或設為私有 (錯誤碼 100)"
+                101, 150 -> "影片擁有者禁止在第三方播放器中內嵌播放 (錯誤碼 $code)"
+                152 -> "YouTube 內嵌來源驗證失敗或限制 (錯誤碼 152)"
+                else -> "YouTube 影片載入失敗 (錯誤碼 $code)"
+            }
+            onErrorCallback(message)
+        }
+    }
+}
+
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun YouTubeIFramePlayer(
     videoId: String,
     modifier: Modifier = Modifier,
+    onLoadingChanged: (Boolean) -> Unit = {},
     onError: (String) -> Unit = {}
 ) {
-    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val htmlContent = remember(videoId) {
@@ -38,41 +79,66 @@ fun YouTubeIFramePlayer(
         <html>
         <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <meta name="referrer" content="strict-origin-when-cross-origin">
             <style>
-                body, html {
-                    margin: 0;
-                    padding: 0;
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                html, body {
                     width: 100%;
                     height: 100%;
                     background-color: #000000;
                     overflow: hidden;
                 }
-                .embed-container {
-                    position: relative;
-                    padding-bottom: 56.25%;
-                    height: 0;
-                    overflow: hidden;
-                    max-width: 100%;
-                }
-                .embed-container iframe, .embed-container object, .embed-container embed {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
+                #player {
                     width: 100%;
                     height: 100%;
+                    border: 0;
                 }
             </style>
         </head>
         <body>
-            <div class="embed-container">
-                <iframe
-                    id="player"
-                    src="https://www.youtube.com/embed/$videoId?autoplay=1&enablejsapi=1&fs=1&modestbranding=1&rel=0&playsinline=1"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowfullscreen>
-                </iframe>
-            </div>
+            <div id="player"></div>
+            <script>
+                var player;
+                function onYouTubeIframeAPIReady() {
+                    player = new YT.Player('player', {
+                        height: '100%',
+                        width: '100%',
+                        videoId: '$videoId',
+                        playerVars: {
+                            'autoplay': 1,
+                            'playsinline': 1,
+                            'enablejsapi': 1,
+                            'origin': 'https://taiwanfreetv.app',
+                            'widget_referrer': 'https://taiwanfreetv.app',
+                            'rel': 0,
+                            'modestbranding': 1,
+                            'controls': 1,
+                            'fs': 1
+                        },
+                        events: {
+                            'onReady': function(event) {
+                                if (window.AndroidBridge && window.AndroidBridge.onReady) {
+                                    window.AndroidBridge.onReady();
+                                }
+                                try {
+                                    event.target.playVideo();
+                                } catch(e){}
+                            },
+                            'onStateChange': function(event) {
+                                if (window.AndroidBridge && window.AndroidBridge.onStateChange) {
+                                    window.AndroidBridge.onStateChange(event.data);
+                                }
+                            },
+                            'onError': function(event) {
+                                if (window.AndroidBridge && window.AndroidBridge.onError) {
+                                    window.AndroidBridge.onError(event.data);
+                                }
+                            }
+                        }
+                    });
+                }
+            </script>
+            <script src="https://www.youtube.com/iframe_api"></script>
         </body>
         </html>
         """.trimIndent()
@@ -87,12 +153,14 @@ fun YouTubeIFramePlayer(
             if (targetWebView != null) {
                 when (event) {
                     Lifecycle.Event.ON_PAUSE -> {
+                        targetWebView.evaluateJavascript("if(player && player.pauseVideo){player.pauseVideo();}", null)
                         targetWebView.onPause()
                         targetWebView.pauseTimers()
                     }
                     Lifecycle.Event.ON_RESUME -> {
                         targetWebView.onResume()
                         targetWebView.resumeTimers()
+                        targetWebView.evaluateJavascript("if(player && player.playVideo){player.playVideo();}", null)
                     }
                     else -> {}
                 }
@@ -104,11 +172,17 @@ fun YouTubeIFramePlayer(
             lifecycleOwner.lifecycle.removeObserver(observer)
             val targetWebView = webViewRef
             if (targetWebView != null) {
-                targetWebView.stopLoading()
-                targetWebView.onPause()
-                targetWebView.clearHistory()
-                targetWebView.removeAllViews()
-                targetWebView.destroy()
+                try {
+                    targetWebView.evaluateJavascript("if(player && player.stopVideo){player.stopVideo();}", null)
+                    targetWebView.stopLoading()
+                    targetWebView.onPause()
+                    targetWebView.clearHistory()
+                    targetWebView.loadUrl("about:blank")
+                    targetWebView.removeAllViews()
+                    targetWebView.destroy()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
             webViewRef = null
         }
@@ -122,15 +196,41 @@ fun YouTubeIFramePlayer(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
+
+                    // Enable Cookie manager
+                    val cookieManager = CookieManager.getInstance()
+                    cookieManager.setAcceptCookie(true)
+                    cookieManager.setAcceptThirdPartyCookies(this, true)
+
                     settings.apply {
                         javaScriptEnabled = true
                         domStorageEnabled = true
+                        databaseEnabled = true
                         mediaPlaybackRequiresUserGesture = false
                         useWideViewPort = true
                         loadWithOverviewMode = true
-                        mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                        userAgentString = "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                        mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
                     }
+
+                    addJavascriptInterface(
+                        YouTubeJsInterface(
+                            onReadyCallback = {
+                                onLoadingChanged(false)
+                            },
+                            onStateChangeCallback = { state ->
+                                when (state) {
+                                    1 -> onLoadingChanged(false) // PLAYING
+                                    3 -> onLoadingChanged(true)  // BUFFERING
+                                    0, 2, 5 -> onLoadingChanged(false) // ENDED, PAUSED, CUED
+                                }
+                            },
+                            onErrorCallback = { errorMsg ->
+                                onLoadingChanged(false)
+                                onError(errorMsg)
+                            }
+                        ),
+                        "AndroidBridge"
+                    )
 
                     webChromeClient = WebChromeClient()
                     webViewClient = object : WebViewClient() {
@@ -141,12 +241,13 @@ fun YouTubeIFramePlayer(
                             description: String?,
                             failingUrl: String?
                         ) {
-                            onError("YouTube 載入錯誤: $description")
+                            onLoadingChanged(false)
+                            onError("網路連線或頁面載入異常: $description")
                         }
                     }
 
                     loadDataWithBaseURL(
-                        "https://www.youtube.com",
+                        "https://taiwanfreetv.app",
                         htmlContent,
                         "text/html",
                         "utf-8",
