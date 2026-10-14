@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.taiwanfreetv.app.BuildConfig
 import com.taiwanfreetv.app.data.model.Channel
 import com.taiwanfreetv.app.data.model.PlaybackStatus
+import com.taiwanfreetv.app.data.model.StreamType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,9 +36,12 @@ fun HomeScreen(
     channels: List<Channel>,
     categories: List<String>,
     selectedCategory: String,
+    selectedPlaybackFilter: String,
+    playbackFilters: List<String>,
     searchQuery: String,
     favoriteIds: Set<String>,
     onCategorySelected: (String) -> Unit,
+    onPlaybackFilterSelected: (String) -> Unit,
     onSearchQueryChanged: (String) -> Unit,
     onChannelClick: (Channel) -> Unit,
     onToggleFavorite: (Channel) -> Unit,
@@ -102,10 +106,32 @@ fun HomeScreen(
             )
         }
 
+        // Playback Mode Filters (全部頻道 / App 內可播放 / 官方平台觀看)
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(vertical = 4.dp)
+        ) {
+            items(playbackFilters) { filter ->
+                val isSelected = filter == selectedPlaybackFilter
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { onPlaybackFilterSelected(filter) },
+                    label = { Text(filter, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFF1E88E5),
+                        selectedLabelColor = Color.White,
+                        containerColor = Color(0xFF222222),
+                        labelColor = Color.LightGray
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
+        }
+
         // Category Menu Tabs
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 6.dp)
         ) {
             items(categories) { category ->
                 val isSelected = category == selectedCategory
@@ -114,12 +140,12 @@ fun HomeScreen(
                         .clip(RoundedCornerShape(20.dp))
                         .clickable { onCategorySelected(category) }
                         .focusable(),
-                    color = if (isSelected) Color(0xFF1E88E5) else Color(0xFF222222),
+                    color = if (isSelected) Color(0xFF1565C0) else Color(0xFF222222),
                     contentColor = if (isSelected) Color.White else Color.LightGray
                 ) {
                     Text(
                         text = category,
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
@@ -127,7 +153,7 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Channel Grid
         if (channels.isEmpty()) {
@@ -211,12 +237,11 @@ fun ChannelCard(
                         }
 
                         // Playback status tag
-                        val (statusText, statusBg) = when (channel.status) {
-                            PlaybackStatus.PLAYABLE -> "可播放" to Color(0xFF2E7D32)
-                            PlaybackStatus.EMBED_DISABLED -> "需官方觀看" to Color(0xFFD84315)
-                            PlaybackStatus.GEO_RESTRICTED -> "地區限制" to Color(0xFFE65100)
-                            PlaybackStatus.SOURCE_INVALID -> "來源失效" to Color(0xFFC62828)
-                            PlaybackStatus.UNVERIFIED -> "尚未驗證" to Color(0xFF616161)
+                        val isExternal = channel.type == StreamType.EXTERNAL_WEB || channel.status == PlaybackStatus.EMBED_DISABLED
+                        val (statusText, statusBg) = if (!isExternal && channel.status == PlaybackStatus.PLAYABLE) {
+                            "App 內可播放" to Color(0xFF2E7D32)
+                        } else {
+                            "官方平台觀看" to Color(0xFFD84315)
                         }
 
                         Surface(

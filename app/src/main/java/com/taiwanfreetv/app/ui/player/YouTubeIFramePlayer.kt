@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -70,9 +71,11 @@ fun YouTubeIFramePlayer(
     onLoadingChanged: (Boolean) -> Unit = {},
     onError: (Int, String) -> Unit = { _, _ -> }
 ) {
+    val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val packageName = context.packageName
 
-    val htmlContent = remember(videoId) {
+    val htmlContent = remember(videoId, packageName) {
         """
         <!DOCTYPE html>
         <html>
@@ -107,8 +110,8 @@ fun YouTubeIFramePlayer(
                             'autoplay': 1,
                             'playsinline': 1,
                             'enablejsapi': 1,
-                            'origin': 'https://taiwanfreetv.app',
-                            'widget_referrer': 'https://taiwanfreetv.app',
+                            'origin': 'https://$packageName',
+                            'widget_referrer': 'https://$packageName',
                             'rel': 0,
                             'modestbranding': 1,
                             'controls': 1,
@@ -212,7 +215,7 @@ fun YouTubeIFramePlayer(
                     addJavascriptInterface(
                         YouTubeJsInterface(
                             onReadyCallback = {
-                                onLoadingChanged(false)
+                                // Wait for actual PLAYING state (state 1) before stopping loading indicator
                             },
                             onStateChangeCallback = { state ->
                                 when (state) {
@@ -245,10 +248,10 @@ fun YouTubeIFramePlayer(
 
                     val headers = HashMap<String, String>()
                     headers["X-Requested-With"] = ctx.packageName
-                    headers["Referer"] = "https://taiwanfreetv.app"
+                    headers["Referer"] = "https://${ctx.packageName}"
 
                     loadDataWithBaseURL(
-                        "https://taiwanfreetv.app",
+                        "https://${ctx.packageName}",
                         htmlContent,
                         "text/html",
                         "utf-8",

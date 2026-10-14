@@ -69,11 +69,10 @@ fun PlayerScreen(
     var areControlsVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
-    // Is permanent non-embeddable restriction? (e.g. YouTube error 101, 150 or status = EMBED_DISABLED / EXTERNAL_WEB)
     val isPermanentEmbedRestriction = remember(currentChannel, errorCode) {
         currentChannel.type == StreamType.EXTERNAL_WEB ||
         currentChannel.status == PlaybackStatus.EMBED_DISABLED ||
-        errorCode == 101 || errorCode == 150
+        errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153
     }
 
     LaunchedEffect(currentChannel.id, retryTrigger) {
@@ -122,7 +121,8 @@ fun PlayerScreen(
                     ExternalFallbackComponent(
                         channel = currentChannel,
                         modifier = Modifier.fillMaxSize(),
-                        customMessage = if (errorCode == 101 || errorCode == 150) "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
+                        customMessage = if (errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153)
+                            "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
                     )
                 } else {
                     PlayerCore(
@@ -248,18 +248,22 @@ fun PlayerScreen(
                     }
                 }
 
-                // 16:9 Video Box
+                // Video Area
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(16f / 9f)
+                        .then(
+                            if (isPermanentEmbedRestriction) Modifier.weight(1f)
+                            else Modifier.aspectRatio(16f / 9f)
+                        )
                         .background(Color.Black)
                 ) {
                     if (isPermanentEmbedRestriction) {
                         ExternalFallbackComponent(
                             channel = currentChannel,
                             modifier = Modifier.fillMaxSize(),
-                            customMessage = if (errorCode == 101 || errorCode == 150) "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
+                            customMessage = if (errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153)
+                                "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
                         )
                     } else {
                         PlayerCore(
@@ -286,11 +290,11 @@ fun PlayerScreen(
                     }
                 }
 
-                // Channel Info & Actions Section Below Video Area
+                // Channel Controls Section Below Video Area
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
+                        .then(if (isPermanentEmbedRestriction) Modifier.wrapContentHeight() else Modifier.weight(1f))
                         .background(Color(0xFF121212))
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
@@ -372,27 +376,29 @@ fun PlayerScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    if (!isPermanentEmbedRestriction) {
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    OutlinedButton(
-                        onClick = { launchOfficialUrl(context, currentChannel.officialUrl) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1E88E5)),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF1E88E5)))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.OpenInBrowser,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = "開啟電視台官方觀看網頁", fontSize = 14.sp)
+                        OutlinedButton(
+                            onClick = { launchOfficialUrl(context, currentChannel.officialUrl) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF1E88E5)),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(Color(0xFF1E88E5)))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.OpenInBrowser,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "開啟電視台官方觀看網頁", fontSize = 14.sp)
+                        }
                     }
                 }
             }
         }
 
-        // Temporary Network Error State Banner (hidden for permanent embed restrictions)
+        // Temporary Network Error State Banner
         if (errorMessage != null && !isPermanentEmbedRestriction) {
             errorMessage?.let { errorText ->
                 Surface(

@@ -13,7 +13,7 @@ class ChannelRepositoryTest {
 
     private val sampleJson = """
     {
-      "version": 3,
+      "version": 4,
       "updatedAt": "2026-03-31",
       "categories": ["全部", "新聞", "國際新聞", "財經"],
       "channels": [
@@ -52,7 +52,7 @@ class ChannelRepositoryTest {
         val config = gson.fromJson(sampleJson, ChannelConfig::class.java)
 
         assertNotNull(config)
-        assertEquals(3, config.version)
+        assertEquals(4, config.version)
         assertEquals(4, config.categories.size)
         assertEquals(2, config.channels.size)
 
