@@ -3,46 +3,60 @@
 **驗證日期**：2026-03-31
 **專案名稱**：TaiwanFreeTV (mytv)
 **測試環境**：Android 13 / 14 實體測試與沙盒單元測試環境
-**版本**：v1.2.0 (code 3)
+**版本**：v1.3.0
 
 ---
 
-## 一、預設頻道驗證矩陣
+## 一、TVBS 直播專案優先調查報告 (P0)
 
-| 頻道號碼 | 頻道名稱 | 分類 | 官方來源網址 | 是否免費 | 即時直播 | 台灣可看 | 允許第三方內嵌 | 播放狀態 | 實測結果與處理方式 |
+### 1. 官方網路直播來源確認
+- **官方直播網頁**：`https://news.tvbs.com.tw/playlists`
+- **YouTube 24小時直播 ID**：`m_dhMSvUCIc` (`🔴LIVE：TVBS NEWS網路獨家新聞24小時直播`)
+- **其他官方介面**：TVBS 新聞網官方主頁 (`https://news.tvbs.com.tw/`) 及 TVBS 新聞 App。
+
+### 2. Android WebView 完整瀏覽實測
+- 在 Android WebView 中載入 `https://news.tvbs.com.tw/` 頁面正常，排版及新聞影音均可順利瀏覽。
+
+### 3. 第三方嵌入與權限調查
+- TVBS 官方頻道將 YouTube 直播開啟了 **「禁止第三方嵌入」** 及 **「限制特定網域 (tvbs.com.tw)」** 權限。
+- 在第三方 Android App 或一般行動 WebView 中載入 YouTube IFrame Player 時，會觸發 YouTube JavaScript API `onError` 錯誤碼 **101 / 150** (Embed restricted by video owner)。
+
+### 4. 授權 HLS 與合規聲明
+- TVBS 官方未公開發布無須認證的 HLS 串流 URL (.m3u8)。
+- 遵守本專案「禁止破解播放限制或抽取未授權串流」之原則，不使用未授權之第三方抓包串流。
+
+### 5. 處理結果與備援機制
+- TVBS 新聞台標記為 `EMBED_DISABLED` (`external_web` 模式)。
+- 使用者點選後提供官方網頁連結直接瀏覽，兼顧播放穩定度與合規性。
+
+---
+
+## 二、日本直播頻道與節目專區驗證矩陣 (P1)
+
+### 1. 日本直播頻道
+
+| 頻道號碼 | 頻道名稱 | 分類 | 官方來源網址 | 免費 | 直播 | 台灣可看 | 允許內嵌 | 狀態 | 實測與處理說明 |
 | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **CH08** | **台視新聞台** | 新聞 | https://news.ttv.com.tw/ | 是 | 是 | 是 | 否 | `EMBED_DISABLED` | YouTube 內嵌受限，降級為「官方平台觀看」模式 |
-| **CH09** | **大愛電視台** | 綜合 | https://www.daai.tv/ | 是 | 是 | 是 | 否 | `EMBED_DISABLED` | YouTube 內嵌受限，降級為「官方平台觀看」模式 |
-| **CH10** | **中視新聞台** | 新聞 | https://www.ctv.com.tw/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`TCnaIE_SAtM`) 內嵌實測可播放 |
-| **CH13** | **公視主頻道** | 綜合 | https://www.pts.org.tw/ | 是 | 是 | 是 | 否 | `EMBED_DISABLED` | 公視限制內嵌播放，降級為「官方平台觀看」模式 |
+| **CH101** | **TBS NEWS DIG** | 日本直播 | https://newsdig.tbs.co.jp/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`Anr15FA9OCI`) 內嵌實測可播放超過 60 秒 |
+| **CH102** | **日テレNEWS24** | 日本直播 | https://news.ntv.co.jp/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`t9kwjZBLI-A`) 內嵌實測可播放超過 60 秒 |
+| **CH103** | **ウェザーニュースLiVE** | 日本直播 | https://weathernews.jp/s/live/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`-PAdw9eF_6Q`) 內嵌實測可播放超過 60 秒 |
 | **CH14** | **NHK WORLD-JAPAN** | 國際新聞 | https://www3.nhk.or.jp/nhkworld/en/live_tv/ | 是 | 是 | 是 | 否 | `EMBED_DISABLED` | 無第三方 App 內嵌授權，降級為「官方平台觀看」模式 |
-| **CH25** | **YOYO TV 幼兒台** | 兒童 | https://yoyo.ebc.net.tw/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`BjY_jXI15ks`) 內嵌實測可播放 |
-| **CH50** | **中天新聞台** | 新聞 | https://gotv.ctitv.com.tw/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`vr3XyVCR4T0`) 內嵌實測可播放 |
-| **CH51** | **東森新聞台** | 新聞 | https://news.ebc.net.tw/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`V1p33hqPrUk`) 內嵌實測可播放 |
-| **CH52** | **華視新聞資訊台** | 新聞 | https://news.cts.com.tw/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`wM0g8EoUZ_E`) 內嵌實測可播放 |
-| **CH53** | **民視新聞台** | 新聞 | https://www.ftvnews.com.tw/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`ylYJSBUgaMA`) 內嵌實測可播放 |
-| **CH54** | **三立新聞台** | 新聞 | https://www.setn.com/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`yeYC0mbSIOo`) 內嵌實測可播放 |
-| **CH55** | **TVBS新聞台** | 新聞 | https://news.tvbs.com.tw/ | 是 | 是 | 是 | 否 | `EMBED_DISABLED` | YouTube 內嵌受限，降級為「官方平台觀看」模式 |
-| **CH57** | **東森財經新聞台** | 財經 | https://fnc.ebc.net.tw/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`AEBeWMM1atA`) 內嵌實測可播放 |
-| **CH88** | **三立財經iNEWS** | 財經 | https://www.setn.com/ | 是 | 是 | 是 | 是 | `PLAYABLE` | YouTube 官方直播 (`pF507BLtbqU`) 內嵌實測可播放 |
+
+### 2. 日本節目與專區 (VOD 隨選影片)
+
+| 頻道號碼 | 節目/頻道名稱 | 分類 | 類型 | 官方來源 | 免費 | 允許內嵌 | 狀態 | 說明 |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- |
+| **CH201** | **おとな旅あるき旅** | 日本旅遊、美食 | 隨選影片 | 電視大阪 YouTube | 是 | 是 | `PLAYABLE` | 電視大阪官方節目 (`v0XWJjGSqhk`)，標註為 VOD 隨選影片 |
+| **CH202** | **NHK WORLD 旅遊文化** | 日本旅遊、美食 | 隨選影片 | NHK WORLD 官網 | 是 | 否 | `EMBED_DISABLED` | 引導至 NHK 官方隨選專區觀看 |
+| **CH301** | **もしものマネー道** | 日本綜藝 | 隨選影片 | 電視大阪 YouTube | 是 | 是 | `PLAYABLE` | 電視大阪官方節目 (`Ruf3mplz2J4`)，標註為 VOD 隨選影片 |
+| **CH401** | **木棉花正版動畫專區** | 日本動畫 | 隨選影片 | 木棉花 YouTube | 是 | 是 | `PLAYABLE` | 木棉花官方免費正版動畫專區 |
+| **CH402** | **Ani-One 正版動畫專區** | 日本動畫 | 隨選影片 | Ani-One YouTube | 是 | 是 | `PLAYABLE` | Ani-One 官方免費正版動畫專區 |
 
 ---
 
-## 二、優先五大頻道專案調查報告
+## 三、播放來源與管理機制
 
-1. **NHK WORLD-JAPAN** (CH14)：官方免費英語國際新聞。無公開免認證 HLS 或第三方 App 內嵌授權。確定標記為 `EMBED_DISABLED`，引導至官方網站/應用程式觀看。
-2. **公視主頻道** (CH13)：公視官方直播限制第三方 App 內嵌（YouTube 傳回 101/150 錯誤）。確定標記為 `EMBED_DISABLED`。
-3. **大愛電視台** (CH09)：大愛電視 YouTube 直播在行動裝置 WebView 內嵌遭遇權限限制。確定標記為 `EMBED_DISABLED`。
-4. **台視新聞台** (CH08)：台視新聞台 YouTube 直播受內嵌權限限制。確定標記為 `EMBED_DISABLED`。
-5. **TVBS新聞台** (CH55)：TVBS 新聞台 YouTube 直播禁止第三方 App 內嵌。確定標記為 `EMBED_DISABLED`。
-
----
-
-## 三、播放狀態與 UI 體驗改善說明
-
-1. **狀態真實分類**：
-   - `PLAYABLE`（App 內可播放）：可在 App 內透過內嵌播放器直接觀看影音。
-   - `EMBED_DISABLED`（官方平台觀看）：官方限制第三方內嵌，清楚標示不誤導使用者，點擊直接開啟官方頁面。
-2. **連續測試紀錄**：
-   - 對所有標示 `PLAYABLE` 之頻道進行至少 60 秒持續播放與連續切台 10 次測試，確定無崩潰或卡死現象。
-   - 對標示 `EMBED_DISABLED` 之頻道確定正確引導降級至官方平台，無重複按鈕或偽裝內嵌直播問題。
+1. **可擴充 JSON 結構 (`channels.json` version 5)**：
+   - 每個頻道均包含：`id`, `name`, `category`, `type` (`youtube_iframe` / `hls` / `external_web`), `official_url`, `embeddable`, `status` (`PLAYABLE` / `EMBED_DISABLED`), `status_message`, `last_verified`, `description`。
+2. **直播與隨選嚴格區分**：
+   - 所有錄影節目均在描述與標題註明【隨選影片】，絕不誤導為直播。
