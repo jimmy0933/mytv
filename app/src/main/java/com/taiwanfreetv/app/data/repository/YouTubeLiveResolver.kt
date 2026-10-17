@@ -23,7 +23,8 @@ data class LiveResolutionResult(
     val liveStatus: LiveStatus,
     val liveVideoId: String?,
     val resolvedAt: String,
-    val lastError: String?
+    val lastError: String?,
+    val liveItems: List<com.taiwanfreetv.app.data.model.LiveItem>? = null
 )
 
 interface HttpFetcher {
@@ -143,8 +144,23 @@ class YouTubeLiveResolver(
     private fun performLiveResolution(channel: Channel): LiveResolutionResult {
         val timestamp = getCurrentIsoTimestamp()
 
-        // Strategy 1: Resolve via youtubeChannelId live endpoint
+        // Strategy 1: Resolve via youtubeChannelId streams tab for multiple programs
         if (!channel.youtubeChannelId.isNullOrEmpty()) {
+            val channelStreamsUrl = "https://www.youtube.com/channel/${channel.youtubeChannelId}/streams"
+            val streamsResult = fetchAndParseStreamsData(channelStreamsUrl)
+            if (streamsResult.isNotEmpty()) {
+                val liveItem = streamsResult.firstOrNull { !it.isUpcoming } ?: streamsResult.first()
+                val status = if (liveItem.isUpcoming) LiveStatus.UPCOMING else LiveStatus.LIVE
+                return LiveResolutionResult(
+                    liveStatus = status,
+                    liveVideoId = liveItem.youtubeVideoId,
+                    resolvedAt = timestamp,
+                    lastError = null,
+                    liveItems = streamsResult
+                )
+            }
+
+            // Fallback to /live endpoint if streams parse failed or empty
             val channelLiveUrl = "https://www.youtube.com/channel/${channel.youtubeChannelId}/live"
             val chResult = fetchAndParseYouTubeHtml(channelLiveUrl)
             if (chResult.isSuccess && chResult.videoId != null) {
@@ -251,6 +267,71 @@ class YouTubeLiveResolver(
                 unplayableReason = null,
                 errorMsg = e.message ?: "連線失敗"
             )
+        }
+    }
+
+    private fun fetchAndParseStreamsData(targetUrl: String): List<com.taiwanfreetv.app.data.model.LiveItem> {
+        try {
+            val (responseCode, rawHtml) = httpFetcher.fetch(targetUrl, httpTimeoutMs)
+            if (responseCode != HttpURLConnection.HTTP_OK) return emptyList()
+
+            val pattern = Pattern.compile("var ytInitialData = (.*?);</script>")
+            val matcher = pattern.matcher(rawHtml)
+            if (!matcher.find()) return emptyList()
+
+            val jsonString = matcher.group(1) ?: return emptyList()
+            val result = mutableListOf<com.taiwanfreetv.app.data.model.LiveItem>()
+
+            // Traverse JSON
+            val vidPattern = Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
+            val vids = mutableSetOf<String>()
+            val vidMatcher = vidPattern.matcher(jsonString)
+            while(vidMatcher.find()) {
+                vidMatcher.group(1)?.let { vids.add(it) }
+            }
+
+            // We use simple regex extraction over the json block to avoid massive GSON trees.
+            // Match blocks roughly around videoId
+            for (vid in vids) {
+                val blockPattern = Pattern.compile("\\{\"videoId\":\"$vid\".*?\"title\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}.*?\"thumbnailOverlays\":\\[(.*?)\\]", Pattern.DOTALL)
+                val blockMatcher = blockPattern.matcher(jsonString)
+                if (blockMatcher.find()) {
+                    val title = blockMatcher.group(1) ?: continue
+                    val overlays = blockMatcher.group(2) ?: ""
+
+                    var isLive = false
+                    var isUpcoming = false
+                    var scheduledTime: String? = null
+
+                    if (overlays.contains("\"style\":\"LIVE\"")) {
+                        isLive = true
+                    } else if (overlays.contains("\"style\":\"UPCOMING\"")) {
+                        isUpcoming = true
+
+                        // Extract scheduled time text
+                        val timePattern = Pattern.compile("\"style\":\"UPCOMING\".*?\"text\":\"([^\"]+)\"")
+                        val timeMatcher = timePattern.matcher(overlays)
+                        if (timeMatcher.find()) {
+                            scheduledTime = timeMatcher.group(1)
+                        }
+                    }
+
+                    if (isLive || isUpcoming) {
+                        result.add(
+                            com.taiwanfreetv.app.data.model.LiveItem(
+                                id = vid,
+                                title = title,
+                                youtubeVideoId = vid,
+                                isUpcoming = isUpcoming,
+                                scheduledStartTime = scheduledTime
+                            )
+                        )
+                    }
+                }
+            }
+            return result
+        } catch (e: Exception) {
+            return emptyList()
         }
     }
 

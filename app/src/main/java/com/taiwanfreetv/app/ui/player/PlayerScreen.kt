@@ -85,6 +85,13 @@ fun PlayerScreen(
         isLoading = true
         areControlsVisible = true
         lastInteractionTime = System.currentTimeMillis()
+
+        if (!currentChannel.liveItems.isNullOrEmpty()) {
+            val defaultLive = currentChannel.liveItems.firstOrNull { !it.isUpcoming } ?: currentChannel.liveItems.first()
+            activeVodVideoId = defaultLive.youtubeVideoId
+        } else {
+            activeVodVideoId = currentChannel.youtubeVideoId
+        }
     }
 
     LaunchedEffect(areControlsVisible, lastInteractionTime, isDrawerOpen, isLandscape) {
@@ -378,6 +385,70 @@ fun PlayerScreen(
                                     }
                                     if (vod.duration != null) {
                                         Text(text = vod.duration, color = Color.White, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (!currentChannel.liveItems.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "頻道直播節目",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        currentChannel.liveItems.forEach { liveItem ->
+                            val isSelected = liveItem.youtubeVideoId == activeVodVideoId
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { activeVodVideoId = liveItem.youtubeVideoId },
+                                color = if (isSelected) Color(0xFF1E88E5) else Color(0xFF222222)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = liveItem.title,
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            val tagColor = if (liveItem.isUpcoming) Color(0xFF1976D2) else Color(0xFFD32F2F)
+                                            val tagText = if (liveItem.isUpcoming) "即將直播" else "直播中"
+                                            Surface(
+                                                color = tagColor,
+                                                shape = RoundedCornerShape(4.dp)
+                                            ) {
+                                                Text(
+                                                    text = tagText,
+                                                    color = Color.White,
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                            if (liveItem.isUpcoming && liveItem.scheduledStartTime != null) {
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(
+                                                    text = liveItem.scheduledStartTime.replace("預定發佈時間：", "").replace("Scheduled for ", ""),
+                                                    color = Color.Gray,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
