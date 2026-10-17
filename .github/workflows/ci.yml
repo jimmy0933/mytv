@@ -36,8 +36,14 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
+      - name: Extract Version Name from Gradle
+        id: version
+        run: |
+          VERSION_NAME=$(grep 'versionName = ' app/build.gradle.kts | head -n 1 | cut -d '"' -f 2)
+          echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
+
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-v1.2.0-debug-${{ steps.vars.outputs.sha_short }}
+          name: app-v${{ steps.version.outputs.version_name }}-debug-${{ steps.vars.outputs.sha_short }}
           path: app/build/outputs/apk/debug/app-debug.apk

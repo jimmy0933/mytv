@@ -263,12 +263,6 @@ fun YouTubeIFramePlayer(
                         }
                     }
 
-                    // Reverting back to loadDataWithBaseURL because it correctly sets the base URL/Origin
-                    // which is crucial for YouTube iframe origin checks. Data URI strips origin.
-                    val headers = HashMap<String, String>()
-                    headers["X-Requested-With"] = ctx.packageName
-                    headers["Referer"] = "https://${ctx.packageName}"
-
                     loadDataWithBaseURL(
                         "https://${ctx.packageName}",
                         htmlContent,
