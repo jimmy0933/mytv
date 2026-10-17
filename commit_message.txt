@@ -1,0 +1,13 @@
+Fix false live detection, API mismatches, channel switching and VOD selection bugs + Add new verified Japanese VOD channels with Subtitle support
+
+This commit addresses both the core functionality bugs and the additional Japanese VOD / Subtitle features requested:
+
+1. **Compilation Error Fix**: Removed the defunct `resolveLiveVideoId` API call from `PlayerScreen`, replacing it with resolution values already prepared by `MainActivity` and passed through `currentChannel`.
+2. **False Live Detection**: Refactored `YouTubeLiveResolver` to strictly check for `"isLiveNow": true` and `hlsManifestUrl`, avoiding ended VOD streams mistakenly marked as live via `"isLiveContent": true`. Clears historical video ID fallbacks correctly for offline streams.
+3. **Channel Switch State**: Replaced fire-and-forget channel resolutions in `MainActivity` with cancellable `Job`s, so switching channels quickly immediately displays loading state and doesn't get overwritten by slow async resolutions completing later.
+4. **VOD Hot-Swapping**: Updated `YouTubeIFramePlayer` to invoke `player.loadVideoById` instead of remounting the WebView when new VODs are selected in the UI. Also passed the updated `currentChannel.youtubeVideoId` into `remember` and `LaunchedEffect` keys correctly.
+5. **New Japanese Channels & VODs**: Verified and added several high-quality Japanese variety/travel shows as official VODs (e.g. 香蕉人的難得美食, 松子不知道的世界) because true 24/7 variety live streams don't exist officially. Translated existing and new Japanese titles to "中文翻譯（原文）" format, fully supporting search functionality.
+6. **Subtitles Feature**: Added robust subtitle support: parsing availability via `subtitleStatus` (`None`, `Traditional_Chinese`, etc) in data models and `channels.json`, maintaining user preference across the app, and injecting `cc_lang_pref='zh-TW'` and `cc_load_policy=1` to the YouTube IFrame player.
+7. **Testing enhancements**: Injected `HttpFetcher` and `Clock` into `YouTubeLiveResolverTest` to properly simulate TTL cache expirations and assert expected parallel fetches.
+
+Bumped App `versionCode` and `versionName`.
