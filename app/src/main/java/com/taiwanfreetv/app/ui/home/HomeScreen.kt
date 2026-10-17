@@ -54,56 +54,117 @@ fun HomeScreen(
             .padding(16.dp)
     ) {
         // App Header Bar
-        Row(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(bottom = 12.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Tv,
-                    contentDescription = null,
-                    tint = Color(0xFF1E88E5),
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "台灣免費第四台",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
+            val isNarrowScreen = maxWidth < 600.dp
+            if (isNarrowScreen) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Tv,
+                            contentDescription = null,
+                            tint = Color(0xFF1E88E5),
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "台灣免費第四台",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.GIT_COMMIT_SHA})",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = onSearchQueryChanged,
+                        placeholder = { Text("搜尋頻道名稱...", color = Color.Gray) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF222222),
+                            unfocusedContainerColor = Color(0xFF1A1A1A),
+                            focusedBorderColor = Color(0xFF1E88E5),
+                            unfocusedBorderColor = Color(0xFF333333),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(24.dp)
                     )
-                    Text(
-                        text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.GIT_COMMIT_SHA})",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Tv,
+                            contentDescription = null,
+                            tint = Color(0xFF1E88E5),
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "台灣免費第四台",
+                                style = MaterialTheme.typography.titleLarge,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.GIT_COMMIT_SHA})",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = onSearchQueryChanged,
+                        placeholder = { Text("搜尋頻道名稱...", color = Color.Gray) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                        modifier = Modifier
+                            .widthIn(max = 280.dp)
+                            .weight(1f, fill = false)
+                            .height(50.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF222222),
+                            unfocusedContainerColor = Color(0xFF1A1A1A),
+                            focusedBorderColor = Color(0xFF1E88E5),
+                            unfocusedBorderColor = Color(0xFF333333),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(24.dp)
                     )
                 }
             }
-
-            // Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChanged,
-                placeholder = { Text("搜尋頻道名稱...", color = Color.Gray) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
-                modifier = Modifier
-                    .width(280.dp)
-                    .height(50.dp),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF222222),
-                    unfocusedContainerColor = Color(0xFF1A1A1A),
-                    focusedBorderColor = Color(0xFF1E88E5),
-                    unfocusedBorderColor = Color(0xFF333333),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                ),
-                shape = RoundedCornerShape(24.dp)
-            )
         }
 
         // Playback Mode Filters (全部頻道 / App 內可播放 / 官方平台觀看)
@@ -238,10 +299,13 @@ fun ChannelCard(
 
                         // Playback status tag
                         val isExternal = channel.type == StreamType.EXTERNAL_WEB || channel.status == PlaybackStatus.EMBED_DISABLED
-                        val (statusText, statusBg) = if (!isExternal && channel.status == PlaybackStatus.PLAYABLE) {
-                            "App 內可播放" to Color(0xFF2E7D32)
-                        } else {
-                            "官方平台觀看" to Color(0xFFD84315)
+                        val (statusText, statusBg) = when {
+                            channel.isVod -> "VOD 隨選" to Color(0xFF7B1FA2)
+                            isExternal -> "官方平台觀看" to Color(0xFFD84315)
+                            channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.LIVE -> "LIVE 直播中" to Color(0xFF2E7D32)
+                            channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE -> "OFFLINE 未直播" to Color(0xFF616161)
+                            channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN -> "UNKNOWN 待確認" to Color(0xFFE65100)
+                            else -> "App 內可播放" to Color(0xFF2E7D32)
                         }
 
                         Surface(
@@ -252,7 +316,7 @@ fun ChannelCard(
                                 text = statusText,
                                 color = Color.White,
                                 fontSize = 10.sp,
-                                fontWeight = FontWeight.Normal,
+                                fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }

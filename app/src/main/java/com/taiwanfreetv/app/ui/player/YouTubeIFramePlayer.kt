@@ -246,10 +246,6 @@ fun YouTubeIFramePlayer(
                         }
                     }
 
-                    val headers = HashMap<String, String>()
-                    headers["X-Requested-With"] = ctx.packageName
-                    headers["Referer"] = "https://${ctx.packageName}"
-
                     loadDataWithBaseURL(
                         "https://${ctx.packageName}",
                         htmlContent,

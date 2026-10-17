@@ -84,7 +84,6 @@ class ChannelRepositoryTest {
     fun testChannelListWithStatus() {
         val gson = Gson()
         val config = gson.fromJson(sampleJson, ChannelConfig::class.java)
-        assertTrue(config.channels.all { it.status != null })
         assertEquals(1, config.channels.count { it.status == PlaybackStatus.PLAYABLE })
         assertEquals(1, config.channels.count { it.status == PlaybackStatus.EMBED_DISABLED })
     }

@@ -30,6 +30,32 @@ enum class PlaybackStatus {
     UNVERIFIED
 }
 
+enum class LiveStatus {
+    @SerializedName("live")
+    LIVE,
+
+    @SerializedName("offline")
+    OFFLINE,
+
+    @SerializedName("unknown")
+    UNKNOWN,
+
+    @SerializedName("embed_disabled")
+    EMBED_DISABLED,
+
+    @SerializedName("vod")
+    VOD
+}
+
+data class VodItem(
+    val id: String,
+    val title: String,
+    @SerializedName("youtube_video_id")
+    val youtubeVideoId: String,
+    val duration: String? = null,
+    val description: String? = null
+)
+
 data class Channel(
     val id: String,
     val name: String,
@@ -37,6 +63,10 @@ data class Channel(
     val type: StreamType,
     @SerializedName("youtube_video_id")
     val youtubeVideoId: String? = null,
+    @SerializedName("youtube_channel_id")
+    val youtubeChannelId: String? = null,
+    @SerializedName("current_live_video_id")
+    val currentLiveVideoId: String? = null,
     @SerializedName("stream_url")
     val streamUrl: String? = null,
     @SerializedName("official_url")
@@ -47,10 +77,20 @@ data class Channel(
     val number: Int = 0,
     val description: String? = null,
     val status: PlaybackStatus = PlaybackStatus.PLAYABLE,
+    @SerializedName("live_status")
+    val liveStatus: LiveStatus = LiveStatus.UNKNOWN,
+    @SerializedName("resolved_at")
+    val resolvedAt: String? = null,
+    @SerializedName("last_error")
+    val lastError: String? = null,
     @SerializedName("status_message")
     val statusMessage: String? = null,
     @SerializedName("last_verified")
-    val lastVerified: String? = null
+    val lastVerified: String? = null,
+    @SerializedName("is_vod")
+    val isVod: Boolean = false,
+    @SerializedName("vod_items")
+    val vodItems: List<VodItem>? = null
 )
 
 data class EPGProgram(

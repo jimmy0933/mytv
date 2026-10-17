@@ -69,6 +69,10 @@ fun PlayerScreen(
     var areControlsVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
+    var activeVodVideoId by remember(currentChannel.id) {
+        mutableStateOf(currentChannel.youtubeVideoId)
+    }
+
     val isPermanentEmbedRestriction = remember(currentChannel, errorCode) {
         currentChannel.type == StreamType.EXTERNAL_WEB ||
         currentChannel.status == PlaybackStatus.EMBED_DISABLED ||
@@ -266,8 +270,9 @@ fun PlayerScreen(
                                 "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
                         )
                     } else {
+                        val activeChannel = currentChannel.copy(youtubeVideoId = activeVodVideoId)
                         PlayerCore(
-                            currentChannel = currentChannel,
+                            currentChannel = activeChannel,
                             retryTrigger = retryTrigger,
                             onLoadingChanged = { isLoading = it },
                             onError = { code, err ->
@@ -339,6 +344,44 @@ fun PlayerScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.LightGray
                     )
+
+                    if (currentChannel.isVod && !currentChannel.vodItems.isNullOrEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "節目清單 (隨選影片)",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        currentChannel.vodItems.forEach { vod ->
+                            val isSelectedVod = vod.youtubeVideoId == activeVodVideoId
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { activeVodVideoId = vod.youtubeVideoId },
+                                color = if (isSelectedVod) Color(0xFF1E88E5) else Color(0xFF222222)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(text = vod.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                        if (!vod.description.isNullOrEmpty()) {
+                                            Text(text = vod.description, color = Color.LightGray, fontSize = 12.sp)
+                                        }
+                                    }
+                                    if (vod.duration != null) {
+                                        Text(text = vod.duration, color = Color.White, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 

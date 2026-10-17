@@ -12,7 +12,10 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
-class ChannelRepository(private val context: Context) {
+class ChannelRepository(
+    private val context: Context,
+    val liveResolver: YouTubeLiveResolver = YouTubeLiveResolver()
+) {
 
     private val gson = Gson()
 
@@ -42,5 +45,17 @@ class ChannelRepository(private val context: Context) {
 
     fun parseConfigJson(jsonString: String): ChannelConfig {
         return gson.fromJson(jsonString, ChannelConfig::class.java)
+    }
+
+    suspend fun resolveChannelLive(channel: Channel, forceRefresh: Boolean = false): Channel {
+        val res = liveResolver.resolveChannelLiveStatus(channel, forceRefresh)
+        val activeVideoId = res.liveVideoId ?: channel.youtubeVideoId
+        return channel.copy(
+            liveStatus = res.liveStatus,
+            currentLiveVideoId = res.liveVideoId,
+            youtubeVideoId = activeVideoId,
+            resolvedAt = res.resolvedAt,
+            lastError = res.lastError
+        )
     }
 }

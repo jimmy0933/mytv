@@ -59,9 +59,13 @@ class MainActivity : ComponentActivity() {
                 if (!lastChannelId.isNullOrEmpty() && allChannels.isNotEmpty()) {
                     val found = allChannels.find { it.id == lastChannelId }
                     if (found != null && found.status == PlaybackStatus.PLAYABLE && found.type != StreamType.EXTERNAL_WEB) {
-                        currentScreen = Screen.Player(found)
+                        val resolvedFound = channelRepository.resolveChannelLive(found)
+                        currentScreen = Screen.Player(resolvedFound)
                     }
                 }
+
+                // Asynchronously resolve dynamic live stream status for channels in background
+                resolveAllChannelsInBackground()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -153,9 +157,27 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun playChannel(channel: Channel) {
-        currentScreen = Screen.Player(channel)
         lifecycleScope.launch {
             userPreferencesRepository.setLastWatchedChannelId(channel.id)
+            val resolvedChannel = if (channel.type == StreamType.YOUTUBE_IFRAME && !channel.isVod) {
+                channelRepository.resolveChannelLive(channel)
+            } else {
+                channel
+            }
+            currentScreen = Screen.Player(resolvedChannel)
+        }
+    }
+
+    private fun resolveAllChannelsInBackground() {
+        lifecycleScope.launch {
+            val updatedList = allChannels.map { ch ->
+                if (ch.type == StreamType.YOUTUBE_IFRAME && !ch.isVod) {
+                    channelRepository.resolveChannelLive(ch)
+                } else {
+                    ch
+                }
+            }
+            allChannels = updatedList
         }
     }
 
