@@ -26,7 +26,7 @@ android {
         applicationId = "com.taiwanfreetv.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
+        versionCode = 4
         versionName = "1.2.0"
 
         buildConfigField("String", "GIT_COMMIT_SHA", "\"$gitCommitSha\"")

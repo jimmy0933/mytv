@@ -91,7 +91,8 @@ fun HomeScreen(
                 placeholder = { Text("搜尋頻道名稱...", color = Color.Gray) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
                 modifier = Modifier
-                    .width(280.dp)
+                    .weight(1f)
+                    .padding(start = 16.dp)
                     .height(50.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
@@ -201,7 +202,7 @@ fun ChannelCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(135.dp)
+            .height(150.dp)
             .clickable { onClick() }
             .focusable(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF252525)),
