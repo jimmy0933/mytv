@@ -133,8 +133,7 @@ class MainActivity : ComponentActivity() {
                                     lifecycleScope.launch {
                                         userPreferencesRepository.toggleFavorite(channel.id)
                                     }
-                                },
-                                onRetry = { channel -> playChannel(channel, forceRefresh = true) }
+                                }
                             )
                         }
 
@@ -151,7 +150,8 @@ class MainActivity : ComponentActivity() {
                                     lifecycleScope.launch {
                                         userPreferencesRepository.toggleFavorite(channel.id)
                                     }
-                                }
+                                },
+                                onRetry = { channel -> playChannel(channel, forceRefresh = true) }
                             )
                         }
                     }
