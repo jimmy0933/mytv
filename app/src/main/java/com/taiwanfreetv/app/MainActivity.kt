@@ -19,6 +19,7 @@ import com.taiwanfreetv.app.data.repository.UserPreferencesRepository
 import com.taiwanfreetv.app.ui.home.HomeScreen
 import com.taiwanfreetv.app.ui.player.PlayerScreen
 import com.taiwanfreetv.app.ui.player.launchOfficialUrl
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -40,6 +41,8 @@ class MainActivity : ComponentActivity() {
     private var selectedPlaybackFilter by mutableStateOf("全部頻道")
     private var searchQuery by mutableStateOf("")
     private var favoriteIds by mutableStateOf<Set<String>>(emptySet())
+
+    private var resolveJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -157,8 +160,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun playChannel(channel: Channel) {
-        lifecycleScope.launch {
+        resolveJob?.cancel()
+        resolveJob = lifecycleScope.launch {
             userPreferencesRepository.setLastWatchedChannelId(channel.id)
+
+            // Show loading or previous screen state while resolving to prevent UI overwrite issues
+            if (currentScreen !is Screen.Player || (currentScreen as Screen.Player).channel.id != channel.id) {
+                currentScreen = Screen.Player(channel) // Set immediately to channel to let UI show loading state
+            }
+
             val resolvedChannel = if (channel.type == StreamType.YOUTUBE_IFRAME && !channel.isVod) {
                 channelRepository.resolveChannelLive(channel)
             } else {

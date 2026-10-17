@@ -49,7 +49,11 @@ class ChannelRepository(
 
     suspend fun resolveChannelLive(channel: Channel, forceRefresh: Boolean = false): Channel {
         val res = liveResolver.resolveChannelLiveStatus(channel, forceRefresh)
-        val activeVideoId = res.liveVideoId ?: channel.youtubeVideoId
+        val activeVideoId = if (res.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.LIVE || res.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.VOD) {
+            res.liveVideoId ?: channel.youtubeVideoId
+        } else {
+            null
+        }
         return channel.copy(
             liveStatus = res.liveStatus,
             currentLiveVideoId = res.liveVideoId,
