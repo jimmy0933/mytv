@@ -31,6 +31,9 @@ enum class PlaybackStatus {
 }
 
 enum class LiveStatus {
+    @SerializedName("resolving")
+    RESOLVING,
+
     @SerializedName("live")
     LIVE,
 

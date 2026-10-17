@@ -133,7 +133,8 @@ class MainActivity : ComponentActivity() {
                                     lifecycleScope.launch {
                                         userPreferencesRepository.toggleFavorite(channel.id)
                                     }
-                                }
+                                },
+                                onRetry = { channel -> playChannel(channel, forceRefresh = true) }
                             )
                         }
 
@@ -159,18 +160,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun playChannel(channel: Channel) {
+    private fun playChannel(channel: Channel, forceRefresh: Boolean = false) {
         resolveJob?.cancel()
         resolveJob = lifecycleScope.launch {
             userPreferencesRepository.setLastWatchedChannelId(channel.id)
 
             // Show loading or previous screen state while resolving to prevent UI overwrite issues
-            if (currentScreen !is Screen.Player || (currentScreen as Screen.Player).channel.id != channel.id) {
-                currentScreen = Screen.Player(channel) // Set immediately to channel to let UI show loading state
+            if (currentScreen !is Screen.Player || (currentScreen as Screen.Player).channel.id != channel.id || forceRefresh) {
+                currentScreen = Screen.Player(channel.copy(liveStatus = com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING)) // Set immediately to channel to let UI show loading state
             }
 
             val resolvedChannel = if (channel.type == StreamType.YOUTUBE_IFRAME && !channel.isVod) {
-                channelRepository.resolveChannelLive(channel)
+                channelRepository.resolveChannelLive(channel, forceRefresh)
             } else {
                 channel
             }
