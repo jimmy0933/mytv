@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import android.webkit.CookieManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -233,7 +235,22 @@ fun YouTubeIFramePlayer(
                     )
 
                     webChromeClient = WebChromeClient()
+
+
                     webViewClient = object : WebViewClient() {
+                        override fun shouldInterceptRequest(
+                            view: WebView?,
+                            request: WebResourceRequest?
+                        ): WebResourceResponse? {
+                            request?.let {
+                                if (it.url.host?.contains("youtube.com") == true) {
+                                    // we can't really mutate request headers, but loadDataWithBaseURL provides the origin
+                                    // which satisfies YouTube.
+                                }
+                            }
+                            return super.shouldInterceptRequest(view, request)
+                        }
+
                         @Suppress("OVERRIDE_DEPRECATION")
                         override fun onReceivedError(
                             view: WebView?,
@@ -246,6 +263,8 @@ fun YouTubeIFramePlayer(
                         }
                     }
 
+                    // Reverting back to loadDataWithBaseURL because it correctly sets the base URL/Origin
+                    // which is crucial for YouTube iframe origin checks. Data URI strips origin.
                     val headers = HashMap<String, String>()
                     headers["X-Requested-With"] = ctx.packageName
                     headers["Referer"] = "https://${ctx.packageName}"

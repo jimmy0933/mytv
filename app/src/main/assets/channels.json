@@ -180,15 +180,16 @@
       "id": "tvbs_news",
       "name": "TVBS新聞台",
       "category": "新聞",
-      "type": "external_web",
+      "type": "youtube_iframe",
       "official_url": "https://news.tvbs.com.tw/",
       "embeddable": false,
-      "status": "embed_disabled",
-      "status_message": "TVBS 新聞台官方 YouTube 頻道禁止第三方 App 內嵌，提供官方直播網頁觀看",
+      "status": "playable",
+      "status_message": "TVBS 新聞台透過 YouTube 搜尋動態解析",
       "last_verified": "2026-03-31",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TVBS_News_logo.png/200px-TVBS_News_logo.png",
       "number": 55,
-      "description": "TVBS新聞台 24小時直播 (官方平台觀看)"
+      "description": "TVBS新聞台 24小時直播",
+      "youtube_video_id": null
     },
     {
       "id": "ebc_financial",
