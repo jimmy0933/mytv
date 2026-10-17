@@ -606,18 +606,39 @@ private fun PlayerCore(
     onLoadingChanged: (Boolean) -> Unit,
     onError: (Int, String) -> Unit
 ) {
+    var resolvedVideoId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(currentChannel.id, retryTrigger) {
+        if (currentChannel.type == StreamType.YOUTUBE_IFRAME) {
+            onLoadingChanged(true)
+            var vid: String? = null
+            if (currentChannel.category != "日本動畫" && currentChannel.category != "日本綜藝" && currentChannel.category != "日本旅遊、美食") {
+                val url = currentChannel.officialUrl
+                vid = com.taiwanfreetv.app.data.repository.YouTubeLiveResolver.resolveLiveVideoId(currentChannel.name)
+            }
+            if (vid != null) {
+                resolvedVideoId = vid
+            } else {
+                resolvedVideoId = currentChannel.youtubeVideoId
+            }
+            onLoadingChanged(false)
+        }
+    }
+
     key(currentChannel.id, retryTrigger) {
         when (currentChannel.type) {
             StreamType.YOUTUBE_IFRAME -> {
-                if (!currentChannel.youtubeVideoId.isNullOrEmpty()) {
+                if (resolvedVideoId != null) {
                     YouTubeIFramePlayer(
-                        videoId = currentChannel.youtubeVideoId,
+                        videoId = resolvedVideoId!!,
                         onLoadingChanged = onLoadingChanged,
                         onError = onError,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    onError(-1, "頻道缺少有效的 YouTube 影片 ID")
+                    if (currentChannel.youtubeVideoId.isNullOrEmpty()) {
+                        onError(-1, "頻道缺少有效的 YouTube 影片 ID")
+                    }
                 }
             }
             StreamType.HLS -> {

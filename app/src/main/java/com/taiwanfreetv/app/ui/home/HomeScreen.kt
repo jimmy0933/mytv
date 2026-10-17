@@ -262,7 +262,7 @@ fun ChannelCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(135.dp)
+            .height(150.dp)
             .clickable { onClick() }
             .focusable(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF252525)),
