@@ -322,6 +322,13 @@
           "youtube_video_id": "v0XWJjGSqhk",
           "duration": "24:15",
           "description": "電視大阪《おとな旅あるき旅》"
+        },
+        {
+          "id": "otona_2",
+          "title": "おとな旅あるき旅 精選集 2",
+          "youtube_video_id": "oXQjA28R3Xg",
+          "duration": "23:00",
+          "description": "電視大阪《おとな旅あるき旅》"
         }
       ]
     },
@@ -362,6 +369,13 @@
           "id": "money_1",
           "title": "もしものマネー道 精選集 1",
           "youtube_video_id": "Ruf3mplz2J4",
+          "duration": "45:00",
+          "description": "電視大阪《もしものマネー道》"
+        },
+        {
+          "id": "money_2",
+          "title": "もしものマネー道 精選集 2",
+          "youtube_video_id": "Ue9R-6Q22lA",
           "duration": "45:00",
           "description": "電視大阪《もしものマネー道》"
         }

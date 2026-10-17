@@ -129,8 +129,9 @@ fun PlayerScreen(
                             "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
                     )
                 } else {
+                    val activeChannel = currentChannel.copy(youtubeVideoId = activeVodVideoId)
                     PlayerCore(
-                        currentChannel = currentChannel,
+                        currentChannel = activeChannel,
                         retryTrigger = retryTrigger,
                         onLoadingChanged = { isLoading = it },
                         onError = { code, err ->
@@ -606,21 +607,12 @@ private fun PlayerCore(
     onLoadingChanged: (Boolean) -> Unit,
     onError: (Int, String) -> Unit
 ) {
-    var resolvedVideoId by remember { mutableStateOf<String?>(null) }
+    var resolvedVideoId by remember(currentChannel.id, currentChannel.youtubeVideoId, retryTrigger) { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(currentChannel.id, retryTrigger) {
+    LaunchedEffect(currentChannel.id, currentChannel.youtubeVideoId, retryTrigger) {
         if (currentChannel.type == StreamType.YOUTUBE_IFRAME) {
             onLoadingChanged(true)
-            var vid: String? = null
-            if (currentChannel.category != "日本動畫" && currentChannel.category != "日本綜藝" && currentChannel.category != "日本旅遊、美食") {
-                val url = currentChannel.officialUrl
-                vid = com.taiwanfreetv.app.data.repository.YouTubeLiveResolver.resolveLiveVideoId(currentChannel.name)
-            }
-            if (vid != null) {
-                resolvedVideoId = vid
-            } else {
-                resolvedVideoId = currentChannel.youtubeVideoId
-            }
+            resolvedVideoId = currentChannel.youtubeVideoId ?: currentChannel.currentLiveVideoId
             onLoadingChanged(false)
         }
     }

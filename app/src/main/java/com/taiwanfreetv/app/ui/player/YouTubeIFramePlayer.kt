@@ -274,7 +274,9 @@ fun YouTubeIFramePlayer(
                     webViewRef = this
                 }
             },
-            update = {},
+            update = { webView ->
+                webView.evaluateJavascript("if(player && player.loadVideoById){player.loadVideoById('$videoId');}", null)
+            },
             modifier = Modifier.fillMaxSize()
         )
     }

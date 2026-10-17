@@ -26,9 +26,47 @@ data class LiveResolutionResult(
     val lastError: String?
 )
 
+interface HttpFetcher {
+    fun fetch(url: String, timeoutMs: Int): Pair<Int, String>
+}
+
+class DefaultHttpFetcher : HttpFetcher {
+    override fun fetch(targetUrl: String, timeoutMs: Int): Pair<Int, String> {
+        val url = URL(targetUrl)
+        val conn = url.openConnection() as HttpURLConnection
+        conn.connectTimeout = timeoutMs
+        conn.readTimeout = timeoutMs
+        conn.requestMethod = "GET"
+        conn.setRequestProperty(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        )
+        conn.setRequestProperty("Accept-Language", "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7")
+
+        val responseCode = conn.responseCode
+        if (responseCode != HttpURLConnection.HTTP_OK) {
+            return Pair(responseCode, "")
+        }
+        val reader = BufferedReader(InputStreamReader(conn.inputStream, "UTF-8"))
+        val html = reader.use { it.readText() }
+        val finalUrl = conn.url.toString()
+        return Pair(responseCode, html + "\n<!-- URL: $finalUrl -->")
+    }
+}
+
+interface Clock {
+    fun currentTimeMillis(): Long
+}
+
+class DefaultClock : Clock {
+    override fun currentTimeMillis(): Long = System.currentTimeMillis()
+}
+
 class YouTubeLiveResolver(
     private val cacheTtlMillis: Long = 5 * 60 * 1000L, // 5 minutes default TTL
-    private val httpTimeoutMs: Int = 6000
+    private val httpTimeoutMs: Int = 6000,
+    private val httpFetcher: HttpFetcher = DefaultHttpFetcher(),
+    private val clock: Clock = DefaultClock()
 ) {
     private val cache = ConcurrentHashMap<String, LiveResolutionResult>()
     private val channelMutexes = ConcurrentHashMap<String, Mutex>()
@@ -41,7 +79,7 @@ class YouTubeLiveResolver(
         channel: Channel,
         forceRefresh: Boolean = false
     ): LiveResolutionResult = withContext(Dispatchers.IO) {
-        val now = System.currentTimeMillis()
+        val now = clock.currentTimeMillis()
         val channelId = channel.id
 
         // VOD / EXTERNAL_WEB / EMBED_DISABLED edge cases
@@ -113,7 +151,7 @@ class YouTubeLiveResolver(
                 val status = if (chResult.isLive) LiveStatus.LIVE else LiveStatus.OFFLINE
                 return LiveResolutionResult(
                     liveStatus = status,
-                    liveVideoId = chResult.videoId,
+                    liveVideoId = if (status == LiveStatus.LIVE) chResult.videoId else null,
                     resolvedAt = timestamp,
                     lastError = chResult.unplayableReason
                 )
@@ -128,14 +166,14 @@ class YouTubeLiveResolver(
                 val status = if (watchResult.isLive) LiveStatus.LIVE else LiveStatus.OFFLINE
                 return LiveResolutionResult(
                     liveStatus = status,
-                    liveVideoId = channel.youtubeVideoId,
+                    liveVideoId = if (status == LiveStatus.LIVE) channel.youtubeVideoId else null,
                     resolvedAt = timestamp,
                     lastError = watchResult.unplayableReason
                 )
             } else {
                 return LiveResolutionResult(
                     liveStatus = LiveStatus.UNKNOWN,
-                    liveVideoId = channel.youtubeVideoId,
+                    liveVideoId = null,
                     resolvedAt = timestamp,
                     lastError = watchResult.errorMsg ?: "無法連線至 YouTube 頁面"
                 )
@@ -160,25 +198,15 @@ class YouTubeLiveResolver(
 
     private fun fetchAndParseYouTubeHtml(targetUrl: String): ParsedPage {
         try {
-            val url = URL(targetUrl)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = httpTimeoutMs
-            conn.readTimeout = httpTimeoutMs
-            conn.requestMethod = "GET"
-            conn.setRequestProperty(
-                "User-Agent",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            )
-            conn.setRequestProperty("Accept-Language", "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7")
+            val (responseCode, rawHtml) = httpFetcher.fetch(targetUrl, httpTimeoutMs)
 
-            val responseCode = conn.responseCode
             if (responseCode != HttpURLConnection.HTTP_OK) {
                 return ParsedPage(false, null, false, null, "HTTP Error $responseCode")
             }
 
-            val finalUrl = conn.url.toString()
-            val reader = BufferedReader(InputStreamReader(conn.inputStream, "UTF-8"))
-            val html = reader.use { it.readText() }
+            val finalUrlLine = rawHtml.lines().lastOrNull { it.startsWith("<!-- URL: ") } ?: ""
+            val finalUrl = finalUrlLine.removePrefix("<!-- URL: ").removeSuffix(" -->").trim()
+            val html = rawHtml
 
             // Extract video ID
             val vidPattern1 = Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
@@ -194,20 +222,25 @@ class YouTubeLiveResolver(
             }
 
             // Check if page is currently LIVE
-            val isLive = html.contains("\"isLive\":true") ||
-                    html.contains("\"isLiveContent\":true") ||
-                    html.contains("\"style\":\"LIVE\"")
+            val isLive = html.contains("\"isLiveNow\":true") ||
+                    (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
 
             // Check if page has unplayable / embed disabled message
             val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
             val unm = unplayablePattern.matcher(html)
             val unplayableMsg = if (unm.find()) unm.group(1) else null
 
+            val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
+            val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
+
+            val isGeoRestricted = geoRestrictedPattern.matcher(html).find() || geoRestrictedPattern2.matcher(html).find()
+            val finalUnplayableMsg = if (isGeoRestricted) "此影片在您的國家/地區無法播放 (Geo Restricted)" else unplayableMsg
+
             return ParsedPage(
                 isSuccess = true,
                 videoId = extractedVid,
                 isLive = isLive,
-                unplayableReason = unplayableMsg,
+                unplayableReason = finalUnplayableMsg,
                 errorMsg = null
             )
         } catch (e: Exception) {
@@ -224,7 +257,7 @@ class YouTubeLiveResolver(
     private fun getCurrentIsoTimestamp(): String {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
         sdf.timeZone = TimeZone.getTimeZone("UTC")
-        return sdf.format(Date())
+        return sdf.format(Date(clock.currentTimeMillis()))
     }
 
     private fun parseIsoTimestamp(timestamp: String?): Long {
