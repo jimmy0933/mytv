@@ -117,8 +117,8 @@
       "name": "中天新聞台",
       "category": "新聞",
       "type": "youtube_iframe",
-      "youtube_video_id": "vr3XyVCR4T0",
-      "youtube_channel_id": "UCpu3bemTQwAU8PqM4kJdoEQ",
+      "youtube_video_id": null,
+      "youtube_channel_id": "UC5l1Yto5oOIgRXlI4p4VKbw",
       "official_url": "https://gotv.ctitv.com.tw/",
       "embeddable": true,
       "status": "playable",
@@ -339,7 +339,7 @@
       "category": "日本直播",
       "type": "youtube_iframe",
       "youtube_video_id": "C1aDnFfxZVY",
-      "youtube_channel_id": "UChu20U6d8G3vS2b6gBfG2cA",
+      "youtube_channel_id": "UCNsidkYpIAQ4QaufptQBPHQ",
       "official_url": "https://weathernews.jp/s/live/",
       "embeddable": true,
       "status": "playable",
@@ -483,6 +483,40 @@
           "description": "Ani-One 官方動畫精選"
         }
       ]
+    },
+    {
+      "id": "ustv_news",
+      "name": "非凡新聞台",
+      "category": "財經",
+      "type": "youtube_iframe",
+      "youtube_video_id": null,
+      "youtube_channel_id": "UCYIVkruUoN04UjV9pkBTswg",
+      "official_url": "https://www.ustv.com.tw/",
+      "embeddable": true,
+      "status": "playable",
+      "live_status": "live",
+      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
+      "last_verified": "2024-04-01",
+      "logo_url": "",
+      "number": 58,
+      "description": "非凡新聞台 24小時直播"
+    },
+    {
+      "id": "ustv_business",
+      "name": "非凡商業台",
+      "category": "財經",
+      "type": "youtube_iframe",
+      "youtube_video_id": null,
+      "youtube_channel_id": "UCLHsQL4YChylDX-06BCuNQA",
+      "official_url": "https://www.ustv.com.tw/",
+      "embeddable": true,
+      "status": "playable",
+      "live_status": "live",
+      "status_message": "官方 YouTube 直播可成功內嵌播放",
+      "last_verified": "2024-04-01",
+      "logo_url": "",
+      "number": 89,
+      "description": "非凡商業台 24小時直播"
     }
   ]
 }

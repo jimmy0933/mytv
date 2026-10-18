@@ -23,7 +23,9 @@ data class LiveResolutionResult(
     val liveStatus: LiveStatus,
     val liveVideoId: String?,
     val resolvedAt: String,
-    val lastError: String?
+    val resolvedTimestamp: Long,
+    val lastError: String?,
+    val liveItems: List<com.taiwanfreetv.app.data.model.LiveItem>? = null
 )
 
 interface HttpFetcher {
@@ -75,6 +77,12 @@ class YouTubeLiveResolver(
         return channelMutexes.computeIfAbsent(channelId) { Mutex() }
     }
 
+    private fun isCacheValid(cached: LiveResolutionResult, now: Long): Boolean {
+        val isFailed = cached.liveStatus == LiveStatus.UNKNOWN || cached.liveStatus == LiveStatus.OFFLINE
+        val dynamicTtl = if (isFailed) 30 * 1000L else cacheTtlMillis
+        return now - cached.resolvedTimestamp < dynamicTtl
+    }
+
     suspend fun resolveChannelLiveStatus(
         channel: Channel,
         forceRefresh: Boolean = false
@@ -88,6 +96,7 @@ class YouTubeLiveResolver(
                 liveStatus = LiveStatus.VOD,
                 liveVideoId = channel.youtubeVideoId,
                 resolvedAt = getCurrentIsoTimestamp(),
+                resolvedTimestamp = now,
                 lastError = null
             )
         }
@@ -97,6 +106,7 @@ class YouTubeLiveResolver(
                 liveStatus = LiveStatus.EMBED_DISABLED,
                 liveVideoId = channel.youtubeVideoId,
                 resolvedAt = getCurrentIsoTimestamp(),
+                resolvedTimestamp = now,
                 lastError = channel.statusMessage
             )
         }
@@ -106,6 +116,7 @@ class YouTubeLiveResolver(
                 liveStatus = LiveStatus.UNKNOWN,
                 liveVideoId = null,
                 resolvedAt = getCurrentIsoTimestamp(),
+                resolvedTimestamp = now,
                 lastError = null
             )
         }
@@ -113,11 +124,8 @@ class YouTubeLiveResolver(
         // Check Cache first
         if (!forceRefresh) {
             val cached = cache[channelId]
-            if (cached != null) {
-                val resolvedTime = parseIsoTimestamp(cached.resolvedAt)
-                if (now - resolvedTime < cacheTtlMillis) {
-                    return@withContext cached
-                }
+            if (cached != null && isCacheValid(cached, now)) {
+                return@withContext cached
             }
         }
 
@@ -126,33 +134,47 @@ class YouTubeLiveResolver(
         mutex.withLock {
             if (!forceRefresh) {
                 val cached = cache[channelId]
-                if (cached != null) {
-                    val resolvedTime = parseIsoTimestamp(cached.resolvedAt)
-                    if (now - resolvedTime < cacheTtlMillis) {
-                        return@withLock cached
-                    }
+                if (cached != null && isCacheValid(cached, now)) {
+                    return@withLock cached
                 }
             }
 
-            val result = performLiveResolution(channel)
+            val result = performLiveResolution(channel, now)
             cache[channelId] = result
             result
         }
     }
 
-    private fun performLiveResolution(channel: Channel): LiveResolutionResult {
+    private fun performLiveResolution(channel: Channel, now: Long): LiveResolutionResult {
         val timestamp = getCurrentIsoTimestamp()
 
-        // Strategy 1: Resolve via youtubeChannelId live endpoint
+        // Strategy 1: Resolve via youtubeChannelId streams tab for multiple programs
         if (!channel.youtubeChannelId.isNullOrEmpty()) {
+            val channelStreamsUrl = "https://www.youtube.com/channel/${channel.youtubeChannelId}/streams"
+            val streamsResult = fetchAndParseStreamsData(channelStreamsUrl)
+            if (streamsResult.isNotEmpty()) {
+                val liveItem = streamsResult.firstOrNull { !it.isUpcoming } ?: streamsResult.first()
+                val status = if (liveItem.isUpcoming) LiveStatus.UPCOMING else LiveStatus.LIVE
+                return LiveResolutionResult(
+                    liveStatus = status,
+                    liveVideoId = liveItem.youtubeVideoId,
+                    resolvedAt = timestamp,
+                    resolvedTimestamp = now,
+                    lastError = null,
+                    liveItems = streamsResult
+                )
+            }
+
+            // Fallback to /live endpoint if streams parse failed or empty
             val channelLiveUrl = "https://www.youtube.com/channel/${channel.youtubeChannelId}/live"
             val chResult = fetchAndParseYouTubeHtml(channelLiveUrl)
             if (chResult.isSuccess && chResult.videoId != null) {
-                val status = if (chResult.isLive) LiveStatus.LIVE else LiveStatus.OFFLINE
+                val status = if (chResult.unplayableReason != null) LiveStatus.EMBED_DISABLED else if (chResult.isLive) LiveStatus.LIVE else LiveStatus.OFFLINE
                 return LiveResolutionResult(
                     liveStatus = status,
-                    liveVideoId = if (status == LiveStatus.LIVE) chResult.videoId else null,
+                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED) chResult.videoId else null,
                     resolvedAt = timestamp,
+                    resolvedTimestamp = now,
                     lastError = chResult.unplayableReason
                 )
             }
@@ -163,11 +185,12 @@ class YouTubeLiveResolver(
             val watchUrl = "https://www.youtube.com/watch?v=${channel.youtubeVideoId}"
             val watchResult = fetchAndParseYouTubeHtml(watchUrl)
             if (watchResult.isSuccess) {
-                val status = if (watchResult.isLive) LiveStatus.LIVE else LiveStatus.OFFLINE
+                val status = if (watchResult.unplayableReason != null) LiveStatus.EMBED_DISABLED else if (watchResult.isLive) LiveStatus.LIVE else LiveStatus.OFFLINE
                 return LiveResolutionResult(
                     liveStatus = status,
-                    liveVideoId = if (status == LiveStatus.LIVE) channel.youtubeVideoId else null,
+                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED) channel.youtubeVideoId else null,
                     resolvedAt = timestamp,
+                    resolvedTimestamp = now,
                     lastError = watchResult.unplayableReason
                 )
             } else {
@@ -175,6 +198,7 @@ class YouTubeLiveResolver(
                     liveStatus = LiveStatus.UNKNOWN,
                     liveVideoId = null,
                     resolvedAt = timestamp,
+                    resolvedTimestamp = now,
                     lastError = watchResult.errorMsg ?: "無法連線至 YouTube 頁面"
                 )
             }
@@ -184,6 +208,7 @@ class YouTubeLiveResolver(
             liveStatus = LiveStatus.UNKNOWN,
             liveVideoId = null,
             resolvedAt = timestamp,
+            resolvedTimestamp = now,
             lastError = "頻道未配置有效的 YouTube Channel ID 或 Video ID"
         )
     }
@@ -209,16 +234,20 @@ class YouTubeLiveResolver(
             val html = rawHtml
 
             // Extract video ID
-            val vidPattern1 = Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
-            val m1 = vidPattern1.matcher(html)
-            var extractedVid: String? = if (m1.find()) m1.group(1) else null
+            val linkPattern = Pattern.compile("<link rel=\"canonical\" href=\"https://www.youtube.com/watch\\?v=([a-zA-Z0-9_-]{11})\"")
+            val mLink = linkPattern.matcher(html)
+            var extractedVid: String? = if (mLink.find()) mLink.group(1) else null
+
+            if (extractedVid == null) {
+                val vidPattern1 = Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
+                val m1 = vidPattern1.matcher(html)
+                if (m1.find()) extractedVid = m1.group(1)
+            }
 
             if (extractedVid == null) {
                 val vidPattern2 = Pattern.compile("v=([a-zA-Z0-9_-]{11})")
                 val m2 = vidPattern2.matcher(finalUrl)
-                if (m2.find()) {
-                    extractedVid = m2.group(1)
-                }
+                if (m2.find()) extractedVid = m2.group(1)
             }
 
             // Check if page is currently LIVE
@@ -230,15 +259,27 @@ class YouTubeLiveResolver(
                     isLivePattern.matcher(html).find() ||
                     (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
 
-            // Check if page has unplayable / embed disabled message
-            val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
-            val unm = unplayablePattern.matcher(html)
-            val unplayableMsg = if (unm.find()) unm.group(1) else null
+                val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
+                val unm = unplayablePattern.matcher(jsonString) // Unplayable usually appears in videoDetails or playabilityStatus
+                if (unm.find()) unplayableMsg = unm.group(1)
 
-            val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
-            val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
+                val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
+                val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
+                isGeoRestricted = geoRestrictedPattern.matcher(jsonString).find() || geoRestrictedPattern2.matcher(jsonString).find()
+            } else {
+                // Fallback to naive global search if ytInitialData isn't structured as expected
+                isLive = html.contains("\"isLiveNow\":true") || html.contains("\"isLive\":true") ||
+                        (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
 
-            val isGeoRestricted = geoRestrictedPattern.matcher(html).find() || geoRestrictedPattern2.matcher(html).find()
+                val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
+                val unm = unplayablePattern.matcher(html)
+                if (unm.find()) unplayableMsg = unm.group(1)
+
+                val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
+                val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
+                isGeoRestricted = geoRestrictedPattern.matcher(html).find() || geoRestrictedPattern2.matcher(html).find()
+            }
+
             val finalUnplayableMsg = if (isGeoRestricted) "此影片在您的國家/地區無法播放 (Geo Restricted)" else unplayableMsg
 
             return ParsedPage(
@@ -256,6 +297,71 @@ class YouTubeLiveResolver(
                 unplayableReason = null,
                 errorMsg = e.message ?: "連線失敗"
             )
+        }
+    }
+
+    private fun fetchAndParseStreamsData(targetUrl: String): List<com.taiwanfreetv.app.data.model.LiveItem> {
+        try {
+            val (responseCode, rawHtml) = httpFetcher.fetch(targetUrl, httpTimeoutMs)
+            if (responseCode != HttpURLConnection.HTTP_OK) return emptyList()
+
+            val pattern = Pattern.compile("var ytInitialData = (.*?);</script>")
+            val matcher = pattern.matcher(rawHtml)
+            if (!matcher.find()) return emptyList()
+
+            val jsonString = matcher.group(1) ?: return emptyList()
+            val result = mutableListOf<com.taiwanfreetv.app.data.model.LiveItem>()
+
+            // Traverse JSON
+            val vidPattern = Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
+            val vids = mutableSetOf<String>()
+            val vidMatcher = vidPattern.matcher(jsonString)
+            while(vidMatcher.find()) {
+                vidMatcher.group(1)?.let { vids.add(it) }
+            }
+
+            // We use simple regex extraction over the json block to avoid massive GSON trees.
+            // Match blocks roughly around videoId
+            for (vid in vids) {
+                val blockPattern = Pattern.compile("\\{\"videoId\":\"$vid\".*?\"title\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}.*?\"thumbnailOverlays\":\\[(.*?)\\]", Pattern.DOTALL)
+                val blockMatcher = blockPattern.matcher(jsonString)
+                if (blockMatcher.find()) {
+                    val title = blockMatcher.group(1) ?: continue
+                    val overlays = blockMatcher.group(2) ?: ""
+
+                    var isLive = false
+                    var isUpcoming = false
+                    var scheduledTime: String? = null
+
+                    if (overlays.contains("\"style\":\"LIVE\"")) {
+                        isLive = true
+                    } else if (overlays.contains("\"style\":\"UPCOMING\"")) {
+                        isUpcoming = true
+
+                        // Extract scheduled time text
+                        val timePattern = Pattern.compile("\"style\":\"UPCOMING\".*?\"text\":\"([^\"]+)\"")
+                        val timeMatcher = timePattern.matcher(overlays)
+                        if (timeMatcher.find()) {
+                            scheduledTime = timeMatcher.group(1)
+                        }
+                    }
+
+                    if (isLive || isUpcoming) {
+                        result.add(
+                            com.taiwanfreetv.app.data.model.LiveItem(
+                                id = vid,
+                                title = title,
+                                youtubeVideoId = vid,
+                                isUpcoming = isUpcoming,
+                                scheduledStartTime = scheduledTime
+                            )
+                        )
+                    }
+                }
+            }
+            return result
+        } catch (e: Exception) {
+            return emptyList()
         }
     }
 

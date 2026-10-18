@@ -31,6 +31,9 @@ enum class PlaybackStatus {
 }
 
 enum class LiveStatus {
+    @SerializedName("resolving")
+    RESOLVING,
+
     @SerializedName("live")
     LIVE,
 
@@ -44,8 +47,22 @@ enum class LiveStatus {
     EMBED_DISABLED,
 
     @SerializedName("vod")
-    VOD
+    VOD,
+
+    @SerializedName("upcoming")
+    UPCOMING
 }
+
+data class LiveItem(
+    val id: String,
+    val title: String,
+    @SerializedName("youtube_video_id")
+    val youtubeVideoId: String,
+    @SerializedName("is_upcoming")
+    val isUpcoming: Boolean = false,
+    @SerializedName("scheduled_start_time")
+    val scheduledStartTime: String? = null
+)
 
 data class VodItem(
     val id: String,
@@ -90,7 +107,9 @@ data class Channel(
     @SerializedName("is_vod")
     val isVod: Boolean = false,
     @SerializedName("vod_items")
-    val vodItems: List<VodItem>? = null
+    val vodItems: List<VodItem>? = null,
+    @SerializedName("live_items")
+    val liveItems: List<LiveItem>? = null
 )
 
 data class EPGProgram(

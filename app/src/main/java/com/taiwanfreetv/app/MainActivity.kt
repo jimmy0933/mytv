@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
     private var favoriteIds by mutableStateOf<Set<String>>(emptySet())
 
     private var resolveJob: Job? = null
+    private var requestGeneration: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,13 +63,14 @@ class MainActivity : ComponentActivity() {
                 if (!lastChannelId.isNullOrEmpty() && allChannels.isNotEmpty()) {
                     val found = allChannels.find { it.id == lastChannelId }
                     if (found != null && found.status == PlaybackStatus.PLAYABLE && found.type != StreamType.EXTERNAL_WEB) {
-                        val resolvedFound = channelRepository.resolveChannelLive(found)
-                        currentScreen = Screen.Player(resolvedFound)
+                        playChannel(found)
                     }
                 }
 
                 // Asynchronously resolve dynamic live stream status for channels in background
                 resolveAllChannelsInBackground()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -150,7 +152,8 @@ class MainActivity : ComponentActivity() {
                                     lifecycleScope.launch {
                                         userPreferencesRepository.toggleFavorite(channel.id)
                                     }
-                                }
+                                },
+                                onRetry = { channel -> playChannel(channel, forceRefresh = true) }
                             )
                         }
                     }
@@ -159,22 +162,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun playChannel(channel: Channel) {
+    private fun playChannel(channel: Channel, forceRefresh: Boolean = false) {
         resolveJob?.cancel()
+        val currentGen = ++requestGeneration
         resolveJob = lifecycleScope.launch {
-            userPreferencesRepository.setLastWatchedChannelId(channel.id)
+            try {
+                userPreferencesRepository.setLastWatchedChannelId(channel.id)
 
-            // Show loading or previous screen state while resolving to prevent UI overwrite issues
-            if (currentScreen !is Screen.Player || (currentScreen as Screen.Player).channel.id != channel.id) {
-                currentScreen = Screen.Player(channel) // Set immediately to channel to let UI show loading state
-            }
+                // Show loading or previous screen state while resolving to prevent UI overwrite issues
+                if (currentScreen !is Screen.Player || (currentScreen as Screen.Player).channel.id != channel.id || forceRefresh) {
+                    currentScreen = Screen.Player(channel.copy(liveStatus = com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING)) // Set immediately to channel to let UI show loading state
+                }
 
-            val resolvedChannel = if (channel.type == StreamType.YOUTUBE_IFRAME && !channel.isVod) {
-                channelRepository.resolveChannelLive(channel)
-            } else {
-                channel
+                val resolvedChannel = if (channel.type == StreamType.YOUTUBE_IFRAME && !channel.isVod) {
+                    channelRepository.resolveChannelLive(channel, forceRefresh)
+                } else {
+                    channel
+                }
+
+                if (currentGen == requestGeneration) {
+                    currentScreen = Screen.Player(resolvedChannel)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            currentScreen = Screen.Player(resolvedChannel)
         }
     }
 
@@ -226,6 +239,8 @@ class MainActivity : ComponentActivity() {
     @Suppress("OVERRIDE_DEPRECATION")
     override fun onBackPressed() {
         if (currentScreen is Screen.Player) {
+            resolveJob?.cancel()
+            requestGeneration++
             currentScreen = Screen.Home
         } else {
             super.onBackPressed()

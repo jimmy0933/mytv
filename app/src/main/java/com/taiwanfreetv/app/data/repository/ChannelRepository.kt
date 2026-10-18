@@ -59,7 +59,8 @@ class ChannelRepository(
             currentLiveVideoId = res.liveVideoId,
             youtubeVideoId = activeVideoId,
             resolvedAt = res.resolvedAt,
-            lastError = res.lastError
+            lastError = res.lastError,
+            liveItems = res.liveItems
         )
     }
 }

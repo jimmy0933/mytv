@@ -303,6 +303,7 @@ fun ChannelCard(
                             channel.isVod -> "VOD 隨選" to Color(0xFF7B1FA2)
                             isExternal -> "官方平台觀看" to Color(0xFFD84315)
                             channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.LIVE -> "LIVE 直播中" to Color(0xFF2E7D32)
+                            channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UPCOMING -> "UPCOMING 預告中" to Color(0xFF1976D2)
                             channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE -> "OFFLINE 未直播" to Color(0xFF616161)
                             channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN -> "UNKNOWN 待確認" to Color(0xFFE65100)
                             else -> "App 內可播放" to Color(0xFF2E7D32)
