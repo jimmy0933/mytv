@@ -78,23 +78,39 @@ fun PlayerScreen(
         currentChannel.type == StreamType.EXTERNAL_WEB ||
         currentChannel.status == PlaybackStatus.EMBED_DISABLED ||
         errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153 ||
+        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.EMBED_DISABLED
+    }
+
+    val isTemporaryLiveIssue = remember(currentChannel) {
         currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ||
         currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN
     }
 
-    LaunchedEffect(currentChannel.id, retryTrigger) {
-        errorMessage = null
-        errorCode = 0
-        isLoading = currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING
+    LaunchedEffect(currentChannel.id, currentChannel.liveStatus, retryTrigger) {
+        if (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING) {
+            isLoading = true
+        } else {
+            isLoading = false
+            errorMessage = null
+            errorCode = 0
+
+            val validVideoIds = currentChannel.liveItems?.map { it.youtubeVideoId }.orEmpty() +
+                                currentChannel.vodItems?.map { it.youtubeVideoId }.orEmpty() +
+                                listOfNotNull(currentChannel.youtubeVideoId, currentChannel.currentLiveVideoId)
+
+            val isActiveVodValid = activeVodVideoId != null && validVideoIds.contains(activeVodVideoId)
+
+            if (!isActiveVodValid) {
+                if (!currentChannel.liveItems.isNullOrEmpty()) {
+                    val defaultLive = currentChannel.liveItems.firstOrNull { !it.isUpcoming } ?: currentChannel.liveItems.first()
+                    activeVodVideoId = defaultLive.youtubeVideoId
+                } else {
+                    activeVodVideoId = currentChannel.youtubeVideoId ?: currentChannel.currentLiveVideoId
+                }
+            }
+        }
         areControlsVisible = true
         lastInteractionTime = System.currentTimeMillis()
-
-        if (!currentChannel.liveItems.isNullOrEmpty()) {
-            val defaultLive = currentChannel.liveItems.firstOrNull { !it.isUpcoming } ?: currentChannel.liveItems.first()
-            activeVodVideoId = defaultLive.youtubeVideoId
-        } else {
-            activeVodVideoId = currentChannel.youtubeVideoId
-        }
     }
 
     LaunchedEffect(areControlsVisible, lastInteractionTime, isDrawerOpen, isLandscape) {
@@ -135,16 +151,34 @@ fun PlayerScreen(
                     val customMsg = when {
                         errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153 ->
                             "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁"
-                        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ->
-                            "頻道目前無直播\n請點擊下方按鈕前往官方頻道查看"
-                        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN ->
-                            "查詢失敗或無法確認狀態\n請點擊下方按鈕前往官方頻道查看"
+                        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.EMBED_DISABLED ->
+                            "此頻道需透過官方平台觀看\n請點擊下方按鈕開啟官方直播網頁"
                         else -> null
                     }
                     ExternalFallbackComponent(
                         channel = currentChannel,
                         modifier = Modifier.fillMaxSize(),
                         customMessage = customMsg
+                    )
+                } else if (isTemporaryLiveIssue) {
+                    val customMsg = when {
+                        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ->
+                            "頻道目前無直播"
+                        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN ->
+                            "查詢失敗或無法確認狀態"
+                        else -> null
+                    }
+                    // Reuse the error banner layout for temporary issues by updating error message state
+                    LaunchedEffect(currentChannel.liveStatus) {
+                        if (errorMessage == null) {
+                            errorMessage = customMsg
+                        }
+                    }
+
+                    ExternalFallbackComponent(
+                        channel = currentChannel,
+                        modifier = Modifier.fillMaxSize(),
+                        customMessage = "$customMsg\n請點擊下方重試，或前往官方頻道查看"
                     )
                 } else if (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING) {
                     Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
@@ -289,16 +323,33 @@ fun PlayerScreen(
                         val customMsg = when {
                             errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153 ->
                                 "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁"
-                            currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ->
-                                "頻道目前無直播\n請點擊下方按鈕前往官方頻道查看"
-                            currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN ->
-                                "查詢失敗或無法確認狀態\n請點擊下方按鈕前往官方頻道查看"
+                            currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.EMBED_DISABLED ->
+                                "此頻道需透過官方平台觀看\n請點擊下方按鈕開啟官方直播網頁"
                             else -> null
                         }
                         ExternalFallbackComponent(
                             channel = currentChannel,
                             modifier = Modifier.fillMaxSize(),
                             customMessage = customMsg
+                        )
+                    } else if (isTemporaryLiveIssue) {
+                        val customMsg = when {
+                            currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ->
+                                "頻道目前無直播"
+                            currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN ->
+                                "查詢失敗或無法確認狀態"
+                            else -> null
+                        }
+                        LaunchedEffect(currentChannel.liveStatus) {
+                            if (errorMessage == null) {
+                                errorMessage = customMsg
+                            }
+                        }
+
+                        ExternalFallbackComponent(
+                            channel = currentChannel,
+                            modifier = Modifier.fillMaxSize(),
+                            customMessage = "$customMsg\n請點擊下方重試，或前往官方頻道查看"
                         )
                     } else if (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING) {
                         Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
@@ -708,9 +759,9 @@ private fun PlayerCore(
     onLoadingChanged: (Boolean) -> Unit,
     onError: (Int, String) -> Unit
 ) {
-    var resolvedVideoId by remember(currentChannel.id, currentChannel.youtubeVideoId, retryTrigger) { mutableStateOf<String?>(null) }
+    var resolvedVideoId by remember(currentChannel.id, currentChannel.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(currentChannel.id, currentChannel.youtubeVideoId, retryTrigger) {
+    LaunchedEffect(currentChannel.id, currentChannel.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) {
         if (currentChannel.type == StreamType.YOUTUBE_IFRAME) {
             onLoadingChanged(true)
             resolvedVideoId = currentChannel.youtubeVideoId ?: currentChannel.currentLiveVideoId

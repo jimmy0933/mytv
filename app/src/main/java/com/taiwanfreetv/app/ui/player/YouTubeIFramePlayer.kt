@@ -77,7 +77,9 @@ fun YouTubeIFramePlayer(
     val lifecycleOwner = LocalLifecycleOwner.current
     val packageName = context.packageName
 
-    val htmlContent = remember(videoId, packageName) {
+    val initialVideoId = remember { videoId }
+
+    val htmlContent = remember(initialVideoId, packageName) {
         """
         <!DOCTYPE html>
         <html>
@@ -103,11 +105,13 @@ fun YouTubeIFramePlayer(
             <div id="player"></div>
             <script>
                 var player;
+                var pendingVideoId = null;
+
                 function onYouTubeIframeAPIReady() {
                     player = new YT.Player('player', {
                         height: '100%',
                         width: '100%',
-                        videoId: '$videoId',
+                        videoId: '$initialVideoId',
                         playerVars: {
                             'autoplay': 1,
                             'playsinline': 1,
@@ -121,6 +125,10 @@ fun YouTubeIFramePlayer(
                         },
                         events: {
                             'onReady': function(event) {
+                                if (pendingVideoId !== null) {
+                                    player.loadVideoById(pendingVideoId);
+                                    pendingVideoId = null;
+                                }
                                 if (window.AndroidBridge && window.AndroidBridge.onReady) {
                                     window.AndroidBridge.onReady();
                                 }
@@ -141,6 +149,19 @@ fun YouTubeIFramePlayer(
                         }
                     });
                 }
+                var currentVideoId = '$initialVideoId';
+                function loadVideo(vid) {
+                    if (currentVideoId === vid && player && player.getPlayerState) {
+                        // Avoid reloading the same video which restarts playback on arbitrary recompositions
+                        return;
+                    }
+                    currentVideoId = vid;
+                    if (player && player.loadVideoById) {
+                        player.loadVideoById(vid);
+                    } else {
+                        pendingVideoId = vid;
+                    }
+                }
             </script>
             <script src="https://www.youtube.com/iframe_api"></script>
         </body>
@@ -149,8 +170,9 @@ fun YouTubeIFramePlayer(
     }
 
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    var lastLoadedVideoId by remember { mutableStateOf(initialVideoId) }
 
-    DisposableEffect(lifecycleOwner, videoId) {
+    DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             val targetWebView = webViewRef
             if (targetWebView != null) {
@@ -275,7 +297,10 @@ fun YouTubeIFramePlayer(
                 }
             },
             update = { webView ->
-                webView.evaluateJavascript("if(player && player.loadVideoById){player.loadVideoById('$videoId');}", null)
+                if (lastLoadedVideoId != videoId) {
+                    lastLoadedVideoId = videoId
+                    webView.evaluateJavascript("loadVideo('$videoId');", null)
+                }
             },
             modifier = Modifier.fillMaxSize()
         )
