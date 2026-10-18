@@ -250,40 +250,14 @@ class YouTubeLiveResolver(
                 if (m2.find()) extractedVid = m2.group(1)
             }
 
-            // Confine checks to ytInitialData or the video ID block to avoid cross-video contamination
-            val pattern = Pattern.compile("var ytInitialData = (.*?);</script>")
-            val matcher = pattern.matcher(rawHtml)
-            var isLive = false
-            var unplayableMsg: String? = null
-            var isGeoRestricted = false
-
-            if (matcher.find()) {
-                val jsonString = matcher.group(1) ?: ""
-
-                // YouTube embeds 'isLiveNow' inside playerMicroformatRenderer which corresponds to the current page's video
-                // Find that specific block to avoid mixing with recommended videos on the side
-                val microformatPattern = Pattern.compile("\"playerMicroformatRenderer\":\\{(.*?)\\}\\}\\},\"cards\":", Pattern.DOTALL)
-                val microformatMatcher = microformatPattern.matcher(jsonString)
-                val microformatBlock = if (microformatMatcher.find()) microformatMatcher.group(1) ?: "" else ""
-
-                val searchBlock = if (microformatBlock.isNotEmpty()) {
-                    microformatBlock
-                } else if (extractedVid != null) {
-                    val blockPattern = Pattern.compile("\\{\"videoId\":\"$extractedVid\".*?\"title\":", Pattern.DOTALL)
-                    val blockMatcher = blockPattern.matcher(jsonString)
-                    if (blockMatcher.find()) {
-                        val startIdx = blockMatcher.start()
-                        val searchLength = minOf(jsonString.length, startIdx + 2000) // Take a reasonable chunk to find properties
-                        jsonString.substring(startIdx, searchLength)
-                    } else {
-                        jsonString
-                    }
-                } else {
-                    jsonString
-                }
-
-                isLive = searchBlock.contains("\"isLiveNow\":true") || searchBlock.contains("\"isLive\":true") ||
-                        (searchBlock.contains("hlsManifestUrl") && !searchBlock.contains("\"isUpcoming\":true"))
+            // Check if page is currently LIVE
+            // Under bot-check ("LOGIN_REQUIRED"), "isLiveNow":true might be missing from microformat,
+            // but "isLive":true is usually still present in ytInitialData/ytInitialPlayerResponse for true live streams.
+            // We use a regex to ensure it only matches within the main video context and not sidebar recommendations.
+            val isLivePattern = Pattern.compile("\"videoViewCountRenderer\":\\{[\\s\\S]*?\"isLive\":true")
+            val isLive = html.contains("\"isLiveNow\":true") ||
+                    isLivePattern.matcher(html).find() ||
+                    (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
 
                 val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
                 val unm = unplayablePattern.matcher(jsonString) // Unplayable usually appears in videoDetails or playabilityStatus
