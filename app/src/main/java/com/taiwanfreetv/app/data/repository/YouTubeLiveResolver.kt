@@ -255,17 +255,77 @@ class YouTubeLiveResolver(
             // but "isLive":true is usually still present in ytInitialData/ytInitialPlayerResponse for true live streams.
             // We use a regex to ensure it only matches within the main video context and not sidebar recommendations.
             val isLivePattern = Pattern.compile("\"videoViewCountRenderer\":\\{[\\s\\S]*?\"isLive\":true")
-            val isLive = html.contains("\"isLiveNow\":true") ||
-                    isLivePattern.matcher(html).find() ||
-                    (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
 
-                val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
-                val unm = unplayablePattern.matcher(jsonString) // Unplayable usually appears in videoDetails or playabilityStatus
-                if (unm.find()) unplayableMsg = unm.group(1)
+            var isLive = false
+            var unplayableMsg: String? = null
+            var isGeoRestricted = false
 
-                val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
-                val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
-                isGeoRestricted = geoRestrictedPattern.matcher(jsonString).find() || geoRestrictedPattern2.matcher(jsonString).find()
+            val ytInitialPlayerResponsePattern = Pattern.compile("ytInitialPlayerResponse\\s*=\\s*(\\{.*?\\});", Pattern.DOTALL)
+            val ytInitialPlayerResponseMatcher = ytInitialPlayerResponsePattern.matcher(html)
+
+            var playerResponseJsonStr: String? = null
+            if (ytInitialPlayerResponseMatcher.find()) {
+                playerResponseJsonStr = ytInitialPlayerResponseMatcher.group(1)
+            } else {
+                // Sometimes it's inside ytInitialData or other blocks
+                val ytInitialDataPattern = Pattern.compile("var ytInitialData = (.*?);</script>")
+                val ytInitialDataMatcher = ytInitialDataPattern.matcher(html)
+                if (ytInitialDataMatcher.find()) {
+                     playerResponseJsonStr = ytInitialDataMatcher.group(1)
+                }
+            }
+
+            if (playerResponseJsonStr != null) {
+                val jsonString = playerResponseJsonStr
+                try {
+                    val jsonObject = org.json.JSONObject(jsonString)
+                    val playabilityStatus = jsonObject.optJSONObject("playabilityStatus")
+                    if (playabilityStatus != null) {
+                        val status = playabilityStatus.optString("status")
+                        if (status == "ERROR" || status == "LOGIN_REQUIRED" || status == "UNPLAYABLE") {
+                            unplayableMsg = playabilityStatus.optString("reason") ?: playabilityStatus.optJSONObject("unplayableText")?.optJSONArray("runs")?.optJSONObject(0)?.optString("text")
+                            isGeoRestricted = unplayableMsg?.contains("This video is not available in your country") == true || unplayableMsg?.contains("The uploader has not made this video available in your country") == true
+                        }
+                    }
+
+                    val videoDetails = jsonObject.optJSONObject("videoDetails")
+                    val microformat = jsonObject.optJSONObject("microformat")?.optJSONObject("playerMicroformatRenderer")
+
+                    if (videoDetails != null) {
+                        isLive = videoDetails.optBoolean("isLiveContent", false) && (!jsonObject.optString("hlsManifestUrl", "").isEmpty() || (microformat?.optBoolean("isLiveNow", false) == true) || (microformat?.optBoolean("isLive", false) == true))
+                        if (!isLive && microformat != null) {
+                             isLive = microformat.optBoolean("isLiveNow", false) || microformat.optBoolean("isLive", false)
+                        }
+                    } else if (microformat != null) {
+                         isLive = microformat.optBoolean("isLiveNow", false) || microformat.optBoolean("isLive", false)
+                    } else {
+                        // Fallback within JSON
+                        isLive = jsonString.contains("\"isLiveNow\":true") ||
+                            isLivePattern.matcher(jsonString).find() ||
+                            (jsonString.contains("hlsManifestUrl") && !jsonString.contains("\"isUpcoming\":true"))
+
+                        val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
+                        val unm = unplayablePattern.matcher(jsonString)
+                        if (unm.find()) unplayableMsg = unm.group(1)
+
+                        val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
+                        val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
+                        isGeoRestricted = geoRestrictedPattern.matcher(jsonString).find() || geoRestrictedPattern2.matcher(jsonString).find()
+                    }
+                } catch (e: Exception) {
+                    // Fallback if structured parse fails completely
+                    isLive = jsonString.contains("\"isLiveNow\":true") ||
+                        isLivePattern.matcher(jsonString).find() ||
+                        (jsonString.contains("hlsManifestUrl") && !jsonString.contains("\"isUpcoming\":true"))
+
+                    val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
+                    val unm = unplayablePattern.matcher(jsonString)
+                    if (unm.find()) unplayableMsg = unm.group(1)
+
+                    val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
+                    val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
+                    isGeoRestricted = geoRestrictedPattern.matcher(jsonString).find() || geoRestrictedPattern2.matcher(jsonString).find()
+                }
             } else {
                 // Fallback to naive global search if ytInitialData isn't structured as expected
                 isLive = html.contains("\"isLiveNow\":true") || html.contains("\"isLive\":true") ||
