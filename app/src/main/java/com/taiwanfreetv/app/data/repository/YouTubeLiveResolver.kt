@@ -128,8 +128,11 @@ class YouTubeLiveResolver(
             if (!forceRefresh) {
                 val cached = cache[channelId]
                 if (cached != null) {
+                    // Bypass failed cache more quickly
+                    val isFailed = cached.liveStatus == LiveStatus.UNKNOWN || cached.liveStatus == LiveStatus.OFFLINE
+                    val dynamicTtl = if (isFailed) 30 * 1000L else cacheTtlMillis // 30s TTL for failures
                     val resolvedTime = parseIsoTimestamp(cached.resolvedAt)
-                    if (now - resolvedTime < cacheTtlMillis) {
+                    if (now - resolvedTime < dynamicTtl) {
                         return@withLock cached
                     }
                 }
@@ -225,20 +228,24 @@ class YouTubeLiveResolver(
             val html = rawHtml
 
             // Extract video ID
-            val vidPattern1 = Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
-            val m1 = vidPattern1.matcher(html)
-            var extractedVid: String? = if (m1.find()) m1.group(1) else null
+            val linkPattern = Pattern.compile("<link rel=\"canonical\" href=\"https://www.youtube.com/watch\\?v=([a-zA-Z0-9_-]{11})\"")
+            val mLink = linkPattern.matcher(html)
+            var extractedVid: String? = if (mLink.find()) mLink.group(1) else null
+
+            if (extractedVid == null) {
+                val vidPattern1 = Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
+                val m1 = vidPattern1.matcher(html)
+                if (m1.find()) extractedVid = m1.group(1)
+            }
 
             if (extractedVid == null) {
                 val vidPattern2 = Pattern.compile("v=([a-zA-Z0-9_-]{11})")
                 val m2 = vidPattern2.matcher(finalUrl)
-                if (m2.find()) {
-                    extractedVid = m2.group(1)
-                }
+                if (m2.find()) extractedVid = m2.group(1)
             }
 
             // Check if page is currently LIVE
-            val isLive = html.contains("\"isLiveNow\":true") ||
+            val isLive = html.contains("\"isLiveNow\":true") || html.contains("\"isLive\":true") ||
                     (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
 
             // Check if page has unplayable / embed disabled message

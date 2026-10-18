@@ -55,7 +55,8 @@ fun PlayerScreen(
     onNextChannel: () -> Unit,
     onPreviousChannel: () -> Unit,
     onToggleFavorite: (Channel) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRetry: (Channel) -> Unit = {}
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -76,13 +77,15 @@ fun PlayerScreen(
     val isPermanentEmbedRestriction = remember(currentChannel, errorCode) {
         currentChannel.type == StreamType.EXTERNAL_WEB ||
         currentChannel.status == PlaybackStatus.EMBED_DISABLED ||
-        errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153
+        errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153 ||
+        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ||
+        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN
     }
 
     LaunchedEffect(currentChannel.id, retryTrigger) {
         errorMessage = null
         errorCode = 0
-        isLoading = true
+        isLoading = currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING
         areControlsVisible = true
         lastInteractionTime = System.currentTimeMillis()
 
@@ -129,12 +132,24 @@ fun PlayerScreen(
                     }
             ) {
                 if (isPermanentEmbedRestriction) {
+                    val customMsg = when {
+                        errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153 ->
+                            "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁"
+                        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ->
+                            "頻道目前無直播\n請點擊下方按鈕前往官方頻道查看"
+                        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN ->
+                            "查詢失敗或無法確認狀態\n請點擊下方按鈕前往官方頻道查看"
+                        else -> null
+                    }
                     ExternalFallbackComponent(
                         channel = currentChannel,
                         modifier = Modifier.fillMaxSize(),
-                        customMessage = if (errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153)
-                            "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
+                        customMessage = customMsg
                     )
+                } else if (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING) {
+                    Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Color(0xFF1E88E5))
+                    }
                 } else {
                     val activeChannel = currentChannel.copy(youtubeVideoId = activeVodVideoId)
                     PlayerCore(
@@ -271,12 +286,24 @@ fun PlayerScreen(
                         .background(Color.Black)
                 ) {
                     if (isPermanentEmbedRestriction) {
+                        val customMsg = when {
+                            errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153 ->
+                                "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁"
+                            currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ->
+                                "頻道目前無直播\n請點擊下方按鈕前往官方頻道查看"
+                            currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN ->
+                                "查詢失敗或無法確認狀態\n請點擊下方按鈕前往官方頻道查看"
+                            else -> null
+                        }
                         ExternalFallbackComponent(
                             channel = currentChannel,
                             modifier = Modifier.fillMaxSize(),
-                            customMessage = if (errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153)
-                                "此頻道擁有者禁止在第三方 App 內嵌播放\n請點擊下方按鈕開啟官方直播網頁" else null
+                            customMessage = customMsg
                         )
+                    } else if (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING) {
+                        Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color(0xFF1E88E5))
+                        }
                     } else {
                         val activeChannel = currentChannel.copy(youtubeVideoId = activeVodVideoId)
                         PlayerCore(
@@ -565,7 +592,10 @@ fun PlayerScreen(
                             Spacer(modifier = Modifier.width(10.dp))
 
                             Button(
-                                onClick = { retryTrigger++ },
+                                onClick = {
+                                    retryTrigger++
+                                    onRetry(currentChannel)
+                                },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E88E5))
                             ) {
                                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -698,10 +728,6 @@ private fun PlayerCore(
                         onError = onError,
                         modifier = Modifier.fillMaxSize()
                     )
-                } else {
-                    if (currentChannel.youtubeVideoId.isNullOrEmpty()) {
-                        onError(-1, "頻道缺少有效的 YouTube 影片 ID")
-                    }
                 }
             }
             StreamType.HLS -> {
