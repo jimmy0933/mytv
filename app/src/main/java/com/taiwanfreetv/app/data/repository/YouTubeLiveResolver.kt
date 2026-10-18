@@ -222,7 +222,12 @@ class YouTubeLiveResolver(
             }
 
             // Check if page is currently LIVE
+            // Under bot-check ("LOGIN_REQUIRED"), "isLiveNow":true might be missing from microformat,
+            // but "isLive":true is usually still present in ytInitialData/ytInitialPlayerResponse for true live streams.
+            // We use a regex to ensure it only matches within the main video context and not sidebar recommendations.
+            val isLivePattern = Pattern.compile("\"videoViewCountRenderer\":\\{[\\s\\S]*?\"isLive\":true")
             val isLive = html.contains("\"isLiveNow\":true") ||
+                    isLivePattern.matcher(html).find() ||
                     (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
 
             // Check if page has unplayable / embed disabled message

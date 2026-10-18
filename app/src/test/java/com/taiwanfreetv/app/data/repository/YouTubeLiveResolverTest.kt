@@ -185,6 +185,26 @@ class YouTubeLiveResolverTest {
     }
 
     @Test
+    fun testBotCheckLiveResolution() = runBlocking {
+        val channel = Channel(
+            id = "bot_check_channel",
+            name = "Bot Check Test",
+            category = "News",
+            type = StreamType.YOUTUBE_IFRAME,
+            youtubeChannelId = "channel_id",
+            youtubeVideoId = "bot_vid",
+            officialUrl = "url"
+        )
+        // Simulate a bot check page where "isLiveNow" is missing but "isLive":true is present inside videoViewCountRenderer
+        mockFetcher.responseHtml = """"videoViewCountRenderer":{"viewCount":{"runs":[{"text":"3,665"},{"text":" watching now"}]},"isLive":true,"originalViewCount":"3665"} "videoId":"bot_vid" "reason":"Sign in to confirm you’re not a bot" """
+        mockFetcher.url = "https://www.youtube.com/watch?v=bot_vid"
+
+        val res = resolver.resolveChannelLiveStatus(channel)
+        assertEquals(LiveStatus.LIVE, res.liveStatus)
+        assertEquals("bot_vid", res.liveVideoId)
+    }
+
+    @Test
     fun testForbiddenEmbedResolution() = runBlocking {
         val channel = Channel(
             id = "forbidden_channel",
