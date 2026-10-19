@@ -255,17 +255,24 @@ class YouTubeLiveResolver(
             // but "isLive":true is usually still present in ytInitialData/ytInitialPlayerResponse for true live streams.
             // We use a regex to ensure it only matches within the main video context and not sidebar recommendations.
             val isLivePattern = Pattern.compile("\"videoViewCountRenderer\":\\{[\\s\\S]*?\"isLive\":true")
-            val isLive = html.contains("\"isLiveNow\":true") ||
+            var isLive = html.contains("\"isLiveNow\":true") ||
                     isLivePattern.matcher(html).find() ||
                     (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
 
+            var unplayableMsg: String? = null
+            var isGeoRestricted: Boolean
+
+            val pattern = Pattern.compile("var ytInitialData = (.*?);</script>")
+            val matcher = pattern.matcher(html)
+            if (matcher.find()) {
+                val jsonString = matcher.group(1)
                 val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
-                val unm = unplayablePattern.matcher(jsonString) // Unplayable usually appears in videoDetails or playabilityStatus
+                val unm = unplayablePattern.matcher(jsonString ?: "") // Unplayable usually appears in videoDetails or playabilityStatus
                 if (unm.find()) unplayableMsg = unm.group(1)
 
                 val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
                 val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
-                isGeoRestricted = geoRestrictedPattern.matcher(jsonString).find() || geoRestrictedPattern2.matcher(jsonString).find()
+                isGeoRestricted = geoRestrictedPattern.matcher(jsonString ?: "").find() || geoRestrictedPattern2.matcher(jsonString ?: "").find()
             } else {
                 // Fallback to naive global search if ytInitialData isn't structured as expected
                 isLive = html.contains("\"isLiveNow\":true") || html.contains("\"isLive\":true") ||
