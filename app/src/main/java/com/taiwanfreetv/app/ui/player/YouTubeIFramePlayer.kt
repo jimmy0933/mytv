@@ -71,7 +71,8 @@ fun YouTubeIFramePlayer(
     videoId: String,
     modifier: Modifier = Modifier,
     onLoadingChanged: (Boolean) -> Unit = {},
-    onError: (Int, String) -> Unit = { _, _ -> }
+    onError: (Int, String) -> Unit = { _, _ -> },
+    onEnded: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

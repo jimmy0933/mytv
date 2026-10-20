@@ -173,11 +173,6 @@
       "description": "中天新聞台 24小時HD線上直播",
       "sources": [
         {
-          "type": "hls",
-          "stream_url": "https://pubads.g.doubleclick.net/ssai/event/xyz",
-          "official_url": "https://gotv.ctitv.com.tw/"
-        },
-        {
           "type": "youtube_iframe",
           "youtube_channel_id": "UC5l1Yto5oOIgRXlI4p4VKbw",
           "official_url": "https://gotv.ctitv.com.tw/"

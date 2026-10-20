@@ -144,7 +144,7 @@ class MainActivity : ComponentActivity() {
                                 currentChannel = screen.channel,
                                 channels = allChannels,
                                 favoriteIds = favoriteIds,
-                                onBackClick = { currentScreen = Screen.Home },
+                                onBackClick = { handleBackToHome() },
                                 onChannelSelect = { channel -> playChannel(channel) },
                                 onNextChannel = { switchNextChannel(screen.channel) },
                                 onPreviousChannel = { switchPreviousChannel(screen.channel) },
@@ -162,6 +162,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+    private fun handleBackToHome() {
+        resolveJob?.cancel()
+        requestGeneration++
+        currentScreen = Screen.Home
+    }
+
     private fun playChannel(channel: Channel, forceRefresh: Boolean = false) {
         resolveJob?.cancel()
         val currentGen = ++requestGeneration
@@ -174,7 +181,7 @@ class MainActivity : ComponentActivity() {
                     currentScreen = Screen.Player(channel.copy(liveStatus = com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING)) // Set immediately to channel to let UI show loading state
                 }
 
-                val resolvedChannel = if (channel.type == StreamType.YOUTUBE_IFRAME && !channel.isVod) {
+                val resolvedChannel = if ((channel.type == StreamType.YOUTUBE_IFRAME || channel.sources.any { it.type == StreamType.YOUTUBE_IFRAME }) && !channel.isVod) {
                     channelRepository.resolveChannelLive(channel, forceRefresh)
                 } else {
                     channel
@@ -194,7 +201,7 @@ class MainActivity : ComponentActivity() {
     private fun resolveAllChannelsInBackground() {
         lifecycleScope.launch {
             val updatedList = allChannels.map { ch ->
-                if (ch.type == StreamType.YOUTUBE_IFRAME && !ch.isVod) {
+                if ((ch.type == StreamType.YOUTUBE_IFRAME || ch.sources.any { it.type == StreamType.YOUTUBE_IFRAME }) && !ch.isVod) {
                     channelRepository.resolveChannelLive(ch)
                 } else {
                     ch
@@ -237,11 +244,31 @@ class MainActivity : ComponentActivity() {
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
+
+    override fun onResume() {
+        super.onResume()
+        val screen = currentScreen
+        if (screen is Screen.Player && (screen.channel.type == StreamType.YOUTUBE_IFRAME || screen.channel.sources.any { it.type == StreamType.YOUTUBE_IFRAME }) && !screen.channel.isVod) {
+            val resolvedAt = screen.channel.resolvedAt
+            if (resolvedAt != null) {
+                try {
+                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US)
+                    sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+                    val time = sdf.parse(resolvedAt)?.time ?: 0L
+                    val now = System.currentTimeMillis()
+                    if (now - time > 5 * 60 * 1000) {
+                        playChannel(screen.channel, forceRefresh = true)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     override fun onBackPressed() {
         if (currentScreen is Screen.Player) {
-            resolveJob?.cancel()
-            requestGeneration++
-            currentScreen = Screen.Home
+            handleBackToHome()
         } else {
             super.onBackPressed()
         }

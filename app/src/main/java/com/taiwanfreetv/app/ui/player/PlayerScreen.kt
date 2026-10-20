@@ -67,6 +67,14 @@ fun PlayerScreen(
     var errorCode by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(true) }
     var retryTrigger by remember { mutableStateOf(0) }
+    var sourceIndex by remember(currentChannel.id) { mutableIntStateOf(0) }
+    val activeSource = currentChannel.sources.getOrNull(sourceIndex) ?: com.taiwanfreetv.app.data.model.Source(
+        type = currentChannel.type,
+        youtubeVideoId = currentChannel.youtubeVideoId,
+        youtubeChannelId = currentChannel.youtubeChannelId,
+        streamUrl = currentChannel.streamUrl,
+        officialUrl = currentChannel.officialUrl
+    )
     var areControlsVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
@@ -74,8 +82,8 @@ fun PlayerScreen(
         mutableStateOf(currentChannel.youtubeVideoId)
     }
 
-    val isPermanentEmbedRestriction = remember(currentChannel, errorCode) {
-        currentChannel.type == StreamType.EXTERNAL_WEB ||
+    val isPermanentEmbedRestriction = remember(currentChannel, activeSource, errorCode) {
+        activeSource.type == StreamType.EXTERNAL_WEB ||
         currentChannel.status == PlaybackStatus.EMBED_DISABLED ||
         errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153 ||
         currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.EMBED_DISABLED
@@ -186,14 +194,22 @@ fun PlayerScreen(
                     }
                 } else {
                     val activeChannel = currentChannel.copy(youtubeVideoId = activeVodVideoId)
-                    PlayerCore(
+                                        PlayerCore(
                         currentChannel = activeChannel,
+                        activeSource = activeSource,
                         retryTrigger = retryTrigger,
                         onLoadingChanged = { isLoading = it },
-                        onError = { code, err ->
-                            errorCode = code
-                            errorMessage = err
-                            isLoading = false
+                        onError = { code, msg ->
+                            if (currentChannel.sources.isNotEmpty() && sourceIndex < currentChannel.sources.size - 1) {
+                                sourceIndex++
+                            } else {
+                                errorCode = code
+                                errorMessage = msg
+                                isLoading = false
+                            }
+                        },
+                        onEnded = {
+                            onRetry(currentChannel)
                         }
                     )
                 }
@@ -357,16 +373,24 @@ fun PlayerScreen(
                         }
                     } else {
                         val activeChannel = currentChannel.copy(youtubeVideoId = activeVodVideoId)
-                        PlayerCore(
-                            currentChannel = activeChannel,
-                            retryTrigger = retryTrigger,
-                            onLoadingChanged = { isLoading = it },
-                            onError = { code, err ->
+                                            PlayerCore(
+                        currentChannel = activeChannel,
+                        activeSource = activeSource,
+                        retryTrigger = retryTrigger,
+                        onLoadingChanged = { isLoading = it },
+                        onError = { code, msg ->
+                            if (currentChannel.sources.isNotEmpty() && sourceIndex < currentChannel.sources.size - 1) {
+                                sourceIndex++
+                            } else {
                                 errorCode = code
-                                errorMessage = err
+                                errorMessage = msg
                                 isLoading = false
                             }
-                        )
+                        },
+                        onEnded = {
+                            onRetry(currentChannel)
+                        }
+                    )
                     }
 
                     if (isLoading && errorMessage == null && !isPermanentEmbedRestriction) {
@@ -755,36 +779,41 @@ fun PlayerScreen(
 @Composable
 private fun PlayerCore(
     currentChannel: Channel,
+    activeSource: com.taiwanfreetv.app.data.model.Source,
     retryTrigger: Int,
     onLoadingChanged: (Boolean) -> Unit,
-    onError: (Int, String) -> Unit
+    onError: (Int, String) -> Unit,
+    onEnded: () -> Unit = {}
 ) {
-    var resolvedVideoId by remember(currentChannel.id, currentChannel.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) { mutableStateOf<String?>(null) }
+    var resolvedVideoId by remember(currentChannel.id, activeSource.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(currentChannel.id, currentChannel.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) {
-        if (currentChannel.type == StreamType.YOUTUBE_IFRAME) {
+    LaunchedEffect(currentChannel.id, activeSource.type, activeSource.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) {
+        if (activeSource.type == StreamType.YOUTUBE_IFRAME) {
             onLoadingChanged(true)
-            resolvedVideoId = currentChannel.youtubeVideoId ?: currentChannel.currentLiveVideoId
+            resolvedVideoId = activeSource.youtubeVideoId ?: currentChannel.currentLiveVideoId
             onLoadingChanged(false)
         }
     }
 
-    key(currentChannel.id, retryTrigger) {
-        when (currentChannel.type) {
+    key(currentChannel.id, activeSource, retryTrigger) {
+        when (activeSource.type) {
             StreamType.YOUTUBE_IFRAME -> {
                 if (resolvedVideoId != null) {
                     YouTubeIFramePlayer(
                         videoId = resolvedVideoId!!,
                         onLoadingChanged = onLoadingChanged,
                         onError = onError,
+                        onEnded = onEnded,
                         modifier = Modifier.fillMaxSize()
                     )
+                } else {
+                    onError(-1, "缺少有效的 YouTube Video ID")
                 }
             }
             StreamType.HLS -> {
-                if (!currentChannel.streamUrl.isNullOrEmpty()) {
+                if (!activeSource.streamUrl.isNullOrEmpty()) {
                     HlsPlayerComponent(
-                        streamUrl = currentChannel.streamUrl,
+                        streamUrl = activeSource.streamUrl,
                         onError = { err -> onError(-1, err) },
                         modifier = Modifier.fillMaxSize()
                     )
@@ -795,8 +824,9 @@ private fun PlayerCore(
             }
             StreamType.EXTERNAL_WEB -> {
                 onLoadingChanged(false)
+                val fallbackChannel = currentChannel.copy(officialUrl = activeSource.officialUrl ?: currentChannel.officialUrl)
                 ExternalFallbackComponent(
-                    channel = currentChannel,
+                    channel = fallbackChannel,
                     modifier = Modifier.fillMaxSize()
                 )
             }
