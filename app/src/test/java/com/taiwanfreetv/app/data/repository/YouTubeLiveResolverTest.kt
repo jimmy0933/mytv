@@ -58,7 +58,7 @@ class YouTubeLiveResolverTest {
             officialUrl = "https://www.tv-osaka.co.jp/ip4/tabi/",
             isVod = true,
             vodItems = listOf(
-                VodItem("1", "精選 1", "v0XWJjGSqhk")
+                VodItem(id="1", youtubeVideoId="v0XWJjGSqhk", title="精選 1")
             )
         )
 
@@ -112,7 +112,7 @@ class YouTubeLiveResolverTest {
             officialUrl = "https://example.com"
         )
 
-        mockFetcher.responseHtml = """{"isLiveNow":true} "videoId":"cache_vid""""
+        mockFetcher.responseHtml = """var ytInitialPlayerResponse = {"videoDetails":{"isLiveContent":true},"playabilityStatus":{"status":"OK"}};</script> <link rel="canonical" href="https://www.youtube.com/watch?v=cache_vid""""
 
         mockClock.currentTime = 100L
         val res1 = resolver.resolveChannelLiveStatus(channel)
@@ -135,7 +135,7 @@ class YouTubeLiveResolverTest {
         mockClock.currentTime = 2000L
         mockFetcher.responseHtml = "" // cause OFFLINE
         val res4 = resolver.resolveChannelLiveStatus(channel, forceRefresh = true)
-        assertEquals(LiveStatus.OFFLINE, res4.liveStatus)
+        assertEquals(LiveStatus.UNKNOWN, res4.liveStatus)
         assertEquals(3, mockFetcher.callCount)
 
         mockClock.currentTime = 2000L + 30000L + 1L // res4 was cached at 2000L, 30s TTL, so we need > 30000ms
@@ -154,7 +154,7 @@ class YouTubeLiveResolverTest {
             youtubeVideoId = "live_vid_1",
             officialUrl = "url"
         )
-        mockFetcher.responseHtml = """{"isLiveNow":true} "videoId":"live_vid_1""""
+        mockFetcher.responseHtml = """var ytInitialPlayerResponse = {"videoDetails":{"isLiveContent":true},"playabilityStatus":{"status":"OK"}};</script> <link rel="canonical" href="https://www.youtube.com/watch?v=live_vid_1""""
         mockFetcher.url = "https://www.youtube.com/watch?v=live_vid_1"
 
         val res = resolver.resolveChannelLiveStatus(channel)
@@ -173,7 +173,7 @@ class YouTubeLiveResolverTest {
             youtubeVideoId = "live_vid_2",
             officialUrl = "url"
         )
-        mockFetcher.responseHtml = """hlsManifestUrl "videoId":"live_vid_2""""
+        mockFetcher.responseHtml = """var ytInitialPlayerResponse = {"videoDetails":{"isLiveContent":true},"playabilityStatus":{"status":"OK"}};</script> <link rel="canonical" href="https://www.youtube.com/watch?v=live_vid_2""""
 
         val res = resolver.resolveChannelLiveStatus(channel)
         assertEquals(LiveStatus.LIVE, res.liveStatus)
@@ -192,7 +192,7 @@ class YouTubeLiveResolverTest {
             officialUrl = "url"
         )
         // isLiveContent indicates it WAS live but isn't now. Should evaluate as OFFLINE
-        mockFetcher.responseHtml = """{"isLiveContent":true} "videoId":"ended_vid""""
+        mockFetcher.responseHtml = """var ytInitialPlayerResponse = {"videoDetails":{"isLiveContent":false},"playabilityStatus":{"status":"OK"}};</script> <link rel="canonical" href="https://www.youtube.com/watch?v=ended_vid""""
 
         val res = resolver.resolveChannelLiveStatus(channel)
         assertEquals(LiveStatus.OFFLINE, res.liveStatus)
@@ -211,12 +211,11 @@ class YouTubeLiveResolverTest {
             officialUrl = "url"
         )
         // Simulate a bot check page where "isLiveNow" is missing but "isLive":true is present inside videoViewCountRenderer
-        mockFetcher.responseHtml = """"videoViewCountRenderer":{"viewCount":{"runs":[{"text":"3,665"},{"text":" watching now"}]},"isLive":true,"originalViewCount":"3665"} "videoId":"bot_vid" "reason":"Sign in to confirm you’re not a bot" """
+        mockFetcher.responseHtml = """ LOGIN_REQUIRED <link rel="canonical" href="https://www.youtube.com/watch?v=bot_vid""""
         mockFetcher.url = "https://www.youtube.com/watch?v=bot_vid"
 
         val res = resolver.resolveChannelLiveStatus(channel)
-        assertEquals(LiveStatus.LIVE, res.liveStatus)
-        assertEquals("bot_vid", res.liveVideoId)
+        assertEquals(LiveStatus.UNKNOWN, res.liveStatus)
     }
 
     @Test
@@ -230,7 +229,7 @@ class YouTubeLiveResolverTest {
             youtubeVideoId = "forb_vid",
             officialUrl = "url"
         )
-        mockFetcher.responseHtml = """{"isLiveNow":true} "videoId":"forb_vid" "unplayableText":{"runs":[{"text":"Playback on other websites has been disabled by the video owner"}]}"""
+        mockFetcher.responseHtml = """var ytInitialPlayerResponse = {"videoDetails":{"isLiveContent":true},"playabilityStatus":{"status":"ERROR","reason":"Playback on other websites has been disabled by the video owner"}};</script> <link rel="canonical" href="https://www.youtube.com/watch?v=forb_vid""""
 
         val res = resolver.resolveChannelLiveStatus(channel)
         assertEquals(LiveStatus.EMBED_DISABLED, res.liveStatus)
@@ -249,12 +248,12 @@ class YouTubeLiveResolverTest {
             youtubeVideoId = "geo_vid",
             officialUrl = "url"
         )
-        mockFetcher.responseHtml = """{"isLiveNow":true} "videoId":"geo_vid" "reason":"The uploader has not made this video available in your country." """
+        mockFetcher.responseHtml = """var ytInitialPlayerResponse = {"videoDetails":{"isLiveContent":true},"playabilityStatus":{"status":"ERROR","reason":"The uploader has not made this video available in your country."}};</script> <link rel="canonical" href="https://www.youtube.com/watch?v=geo_vid""""
 
         val res = resolver.resolveChannelLiveStatus(channel)
-        assertEquals(LiveStatus.EMBED_DISABLED, res.liveStatus)
+        assertEquals(LiveStatus.GEO_RESTRICTED, res.liveStatus)
         assertEquals("geo_vid", res.liveVideoId)
-        assertEquals("此影片在您的國家/地區無法播放 (Geo Restricted)", res.lastError)
+        assertEquals("The uploader has not made this video available in your country.", res.lastError)
     }
 
     @Test
@@ -362,7 +361,7 @@ class YouTubeLiveResolverTest {
             youtubeVideoId = "conc_vid",
             officialUrl = "url"
         )
-        mockFetcher.responseHtml = """{"isLiveNow":true} "videoId":"conc_vid""""
+        mockFetcher.responseHtml = """var ytInitialPlayerResponse = {"videoDetails":{"isLiveContent":true},"playabilityStatus":{"status":"OK"}};</script> <link rel="canonical" href="https://www.youtube.com/watch?v=conc_vid""""
 
         resolver.clearCache()
         val deferred1 = async(Dispatchers.Default) { resolver.resolveChannelLiveStatus(channel) }

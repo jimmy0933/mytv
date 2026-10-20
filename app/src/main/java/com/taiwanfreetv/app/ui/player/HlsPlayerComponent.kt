@@ -80,6 +80,11 @@ fun HlsPlayerComponent(
                     )
                 }
             },
+            update = { playerView ->
+                if (playerView.player != exoPlayer) {
+                    playerView.player = exoPlayer
+                }
+            },
             modifier = Modifier.fillMaxSize()
         )
     }

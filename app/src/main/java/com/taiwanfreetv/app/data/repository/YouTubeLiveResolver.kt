@@ -18,6 +18,8 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 
 data class LiveResolutionResult(
     val liveStatus: LiveStatus,
@@ -169,10 +171,15 @@ class YouTubeLiveResolver(
             val channelLiveUrl = "https://www.youtube.com/channel/${channel.youtubeChannelId}/live"
             val chResult = fetchAndParseYouTubeHtml(channelLiveUrl)
             if (chResult.isSuccess && chResult.videoId != null) {
-                val status = if (chResult.unplayableReason != null) LiveStatus.EMBED_DISABLED else if (chResult.isLive) LiveStatus.LIVE else LiveStatus.OFFLINE
+                val status = when {
+                    chResult.status == "ERROR" || chResult.status == "UNPLAYABLE" -> if (chResult.unplayableReason?.contains("country") == true) LiveStatus.GEO_RESTRICTED else LiveStatus.EMBED_DISABLED
+                    chResult.status == "LOGIN_REQUIRED" || chResult.status == "PARSE_ERROR" || chResult.status == "UNKNOWN_FORMAT" -> LiveStatus.UNKNOWN
+                    chResult.isLive -> LiveStatus.LIVE
+                    else -> LiveStatus.OFFLINE
+                }
                 return LiveResolutionResult(
                     liveStatus = status,
-                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED) chResult.videoId else null,
+                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED || status == LiveStatus.GEO_RESTRICTED) chResult.videoId else null,
                     resolvedAt = timestamp,
                     resolvedTimestamp = now,
                     lastError = chResult.unplayableReason
@@ -185,10 +192,15 @@ class YouTubeLiveResolver(
             val watchUrl = "https://www.youtube.com/watch?v=${channel.youtubeVideoId}"
             val watchResult = fetchAndParseYouTubeHtml(watchUrl)
             if (watchResult.isSuccess) {
-                val status = if (watchResult.unplayableReason != null) LiveStatus.EMBED_DISABLED else if (watchResult.isLive) LiveStatus.LIVE else LiveStatus.OFFLINE
+                val status = when {
+                    watchResult.status == "ERROR" || watchResult.status == "UNPLAYABLE" -> if (watchResult.unplayableReason?.contains("country") == true) LiveStatus.GEO_RESTRICTED else LiveStatus.EMBED_DISABLED
+                    watchResult.status == "LOGIN_REQUIRED" || watchResult.status == "PARSE_ERROR" || watchResult.status == "UNKNOWN_FORMAT" -> LiveStatus.UNKNOWN
+                    watchResult.isLive -> LiveStatus.LIVE
+                    else -> LiveStatus.OFFLINE
+                }
                 return LiveResolutionResult(
                     liveStatus = status,
-                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED) channel.youtubeVideoId else null,
+                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED || status == LiveStatus.GEO_RESTRICTED) channel.youtubeVideoId else null,
                     resolvedAt = timestamp,
                     resolvedTimestamp = now,
                     lastError = watchResult.unplayableReason
@@ -217,6 +229,7 @@ class YouTubeLiveResolver(
         val isSuccess: Boolean,
         val videoId: String?,
         val isLive: Boolean,
+        val status: String?, // playabilityStatus.status
         val unplayableReason: String?,
         val errorMsg: String?
     )
@@ -226,29 +239,39 @@ class YouTubeLiveResolver(
             val (responseCode, rawHtml) = httpFetcher.fetch(targetUrl, httpTimeoutMs)
 
             if (responseCode != HttpURLConnection.HTTP_OK) {
-                return ParsedPage(false, null, false, null, "HTTP Error $responseCode")
+                return ParsedPage(false, null, false, null, null, "HTTP Error $responseCode")
             }
 
-            val finalUrlLine = rawHtml.lines().lastOrNull { it.startsWith("<!-- URL: ") } ?: ""
-            val finalUrl = finalUrlLine.removePrefix("<!-- URL: ").removeSuffix(" -->").trim()
             val html = rawHtml
 
-            // Extract video ID
-            val linkPattern = Pattern.compile("<link rel=\"canonical\" href=\"https://www.youtube.com/watch\\?v=([a-zA-Z0-9_-]{11})\"")
+            var extractedVid: String? = null
+            val linkPattern = java.util.regex.Pattern.compile("<link rel=\"canonical\" href=\"https://www.youtube.com/watch\\?v=([a-zA-Z0-9_-]{11})\"")
             val mLink = linkPattern.matcher(html)
-            var extractedVid: String? = if (mLink.find()) mLink.group(1) else null
+            if (mLink.find()) extractedVid = mLink.group(1)
 
             if (extractedVid == null) {
-                val vidPattern1 = Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
+                val vidPattern1 = java.util.regex.Pattern.compile("\"videoId\":\"([a-zA-Z0-9_-]{11})\"")
                 val m1 = vidPattern1.matcher(html)
                 if (m1.find()) extractedVid = m1.group(1)
             }
 
-            if (extractedVid == null) {
-                val vidPattern2 = Pattern.compile("v=([a-zA-Z0-9_-]{11})")
-                val m2 = vidPattern2.matcher(finalUrl)
-                if (m2.find()) extractedVid = m2.group(1)
-            }
+            var isLive = false
+            var status: String? = null
+            var reason: String? = null
+
+            val playerResponsePattern = java.util.regex.Pattern.compile("var ytInitialPlayerResponse = (.*?);(?:var|</script>)", java.util.regex.Pattern.DOTALL)
+            val matcher = playerResponsePattern.matcher(html)
+            if (matcher.find()) {
+                val jsonString = matcher.group(1)
+                try {
+                    val jsonObj = JsonParser.parseString(jsonString ?: "").asJsonObject
+
+                    if (jsonObj.has("videoDetails") && !jsonObj.get("videoDetails").isJsonNull) {
+                        val videoDetails = jsonObj.getAsJsonObject("videoDetails")
+                        if (videoDetails.has("isLiveContent")) {
+                            isLive = videoDetails.get("isLiveContent").asBoolean
+                        }
+                    }
 
             // Check if page is currently LIVE
             // Under bot-check ("LOGIN_REQUIRED"), "isLiveNow":true might be missing from microformat,
@@ -327,26 +350,21 @@ class YouTubeLiveResolver(
                     isGeoRestricted = geoRestrictedPattern.matcher(jsonString).find() || geoRestrictedPattern2.matcher(jsonString).find()
                 }
             } else {
-                // Fallback to naive global search if ytInitialData isn't structured as expected
-                isLive = html.contains("\"isLiveNow\":true") || html.contains("\"isLive\":true") ||
-                        (html.contains("hlsManifestUrl") && !html.contains("\"isUpcoming\":true"))
-
-                val unplayablePattern = Pattern.compile("\"unplayableText\":\\{\"runs\":\\[\\{\"text\":\"([^\"]+)\"\\}")
-                val unm = unplayablePattern.matcher(html)
-                if (unm.find()) unplayableMsg = unm.group(1)
-
-                val geoRestrictedPattern = Pattern.compile("\"reason\":\"[^\"]*This video is not available in your country[^\"]*\"")
-                val geoRestrictedPattern2 = Pattern.compile("\"reason\":\"[^\"]*The uploader has not made this video available in your country[^\"]*\"")
-                isGeoRestricted = geoRestrictedPattern.matcher(html).find() || geoRestrictedPattern2.matcher(html).find()
+                if (html.contains("LOGIN_REQUIRED") || html.contains("sign in to confirm you're not a bot")) {
+                    status = "LOGIN_REQUIRED"
+                    reason = "Bot Check or Login Required"
+                } else {
+                    status = "UNKNOWN_FORMAT"
+                    reason = "Could not find ytInitialPlayerResponse"
+                }
             }
-
-            val finalUnplayableMsg = if (isGeoRestricted) "此影片在您的國家/地區無法播放 (Geo Restricted)" else unplayableMsg
 
             return ParsedPage(
                 isSuccess = true,
                 videoId = extractedVid,
                 isLive = isLive,
-                unplayableReason = finalUnplayableMsg,
+                status = status,
+                unplayableReason = reason,
                 errorMsg = null
             )
         } catch (e: Exception) {
@@ -354,6 +372,7 @@ class YouTubeLiveResolver(
                 isSuccess = false,
                 videoId = null,
                 isLive = false,
+                status = null,
                 unplayableReason = null,
                 errorMsg = e.message ?: "連線失敗"
             )
