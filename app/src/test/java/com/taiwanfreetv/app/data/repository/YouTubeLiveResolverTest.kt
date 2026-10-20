@@ -257,6 +257,100 @@ class YouTubeLiveResolverTest {
     }
 
     @Test
+    fun testStructuredJsonParsingLive() = runBlocking {
+        val channel = Channel(
+            id = "structured_json_channel",
+            name = "Structured Json",
+            category = "News",
+            type = StreamType.YOUTUBE_IFRAME,
+            youtubeChannelId = "channel_id",
+            youtubeVideoId = "struct_vid",
+            officialUrl = "url"
+        )
+        // The jsonString inside ytInitialData should be parsed instead of the document HTML
+        mockFetcher.responseHtml = """
+            <html>
+            <body>
+            <script>var ytInitialData = {"isLiveNow":true, "videoId":"struct_vid"};</script>
+            </body>
+            </html>
+        """.trimIndent()
+
+        val res = resolver.resolveChannelLiveStatus(channel)
+        assertEquals(LiveStatus.LIVE, res.liveStatus)
+        assertEquals("struct_vid", res.liveVideoId)
+    }
+
+    @Test
+    fun testVodButRecommendedIsLive() = runBlocking {
+        val channel = Channel(
+            id = "vod_rec_live_channel",
+            name = "VOD Rec Live",
+            category = "News",
+            type = StreamType.YOUTUBE_IFRAME,
+            youtubeChannelId = "channel_id",
+            youtubeVideoId = "vod_vid",
+            officialUrl = "url"
+        )
+        // Main video is NOT live, but there is a recommended video that IS live
+        mockFetcher.responseHtml = """
+            <html>
+            <body>
+            <script>var ytInitialData = {"videoId":"vod_vid", "compactVideoRenderer": {"isLive":true, "videoId":"other_live_vid"}};</script>
+            </body>
+            </html>
+        """.trimIndent()
+
+        val res = resolver.resolveChannelLiveStatus(channel)
+        assertEquals(LiveStatus.OFFLINE, res.liveStatus)
+        assertNull(res.liveVideoId)
+    }
+
+    @Test
+    fun testMissingOrCorruptedJson() = runBlocking {
+        val channel = Channel(
+            id = "missing_json_channel",
+            name = "Missing Json",
+            category = "News",
+            type = StreamType.YOUTUBE_IFRAME,
+            youtubeChannelId = "channel_id",
+            youtubeVideoId = "missing_vid",
+            officialUrl = "url"
+        )
+        // Incorrect JSON or missing ytInitialData format completely
+        mockFetcher.responseHtml = """
+            <html><body><h1>No JSON Here!</h1><script>var myData = { "isLiveNow": true };</script></body></html>
+        """.trimIndent() // doesn't have isLiveNow at root of html or in ytInitialData
+
+        val res = resolver.resolveChannelLiveStatus(channel)
+        assertEquals(LiveStatus.OFFLINE, res.liveStatus)
+    }
+
+    @Test
+    fun testUpcomingLivestreamNotMarkedAsLive() = runBlocking {
+        val channel = Channel(
+            id = "upcoming_channel",
+            name = "Upcoming Test",
+            category = "News",
+            type = StreamType.YOUTUBE_IFRAME,
+            youtubeChannelId = "channel_id",
+            youtubeVideoId = "upcoming_vid",
+            officialUrl = "url"
+        )
+        mockFetcher.responseHtml = """
+            <html>
+            <body>
+            <script>var ytInitialData = {"hlsManifestUrl":"http://test.m3u8", "isUpcoming":true, "videoId":"upcoming_vid"};</script>
+            </body>
+            </html>
+        """.trimIndent()
+
+        val res = resolver.resolveChannelLiveStatus(channel)
+        assertEquals(LiveStatus.OFFLINE, res.liveStatus)
+        assertNull(res.liveVideoId)
+    }
+
+    @Test
     fun testConcurrentRequests() = runBlocking {
         val channel = Channel(
             id = "concurrent_channel",
