@@ -323,7 +323,7 @@ class YouTubeLiveResolverTest {
         """.trimIndent() // doesn't have isLiveNow at root of html or in ytInitialData
 
         val res = resolver.resolveChannelLiveStatus(channel)
-        assertEquals(LiveStatus.OFFLINE, res.liveStatus)
+        assertEquals(LiveStatus.UNKNOWN, res.liveStatus)
     }
 
     @Test

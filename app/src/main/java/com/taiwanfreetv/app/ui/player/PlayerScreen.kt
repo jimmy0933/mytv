@@ -78,6 +78,7 @@ fun PlayerScreen(
     var areControlsVisible by remember { mutableStateOf(true) }
     var lastInteractionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
+    val latestChannelId by androidx.compose.runtime.rememberUpdatedState(currentChannel.id)
     var activeVodVideoId by remember(currentChannel.id) {
         mutableStateOf(currentChannel.youtubeVideoId)
     }
@@ -209,7 +210,12 @@ fun PlayerScreen(
                             }
                         },
                         onEnded = {
-                            onRetry(currentChannel)
+                            if (currentChannel.id == latestChannelId) {
+                                val isPlayingVod = currentChannel.isVod || currentChannel.vodItems?.any { it.youtubeVideoId == activeVodVideoId } == true
+                                if (!isPlayingVod) {
+                                    onRetry(currentChannel)
+                                }
+                            }
                         }
                     )
                 }
@@ -388,7 +394,12 @@ fun PlayerScreen(
                             }
                         },
                         onEnded = {
-                            onRetry(currentChannel)
+                            if (currentChannel.id == latestChannelId) {
+                                val isPlayingVod = currentChannel.isVod || currentChannel.vodItems?.any { it.youtubeVideoId == activeVodVideoId } == true
+                                if (!isPlayingVod) {
+                                    onRetry(currentChannel)
+                                }
+                            }
                         }
                     )
                     }
@@ -785,12 +796,21 @@ private fun PlayerCore(
     onError: (Int, String) -> Unit,
     onEnded: () -> Unit = {}
 ) {
-    var resolvedVideoId by remember(currentChannel.id, activeSource.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) { mutableStateOf<String?>(null) }
+    var resolvedVideoId by remember(currentChannel.id, activeSource.youtubeVideoId, currentChannel.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(currentChannel.id, activeSource.type, activeSource.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) {
+    LaunchedEffect(currentChannel.id, activeSource.type, activeSource.youtubeVideoId, currentChannel.youtubeVideoId, currentChannel.currentLiveVideoId, retryTrigger) {
         if (activeSource.type == StreamType.YOUTUBE_IFRAME) {
             onLoadingChanged(true)
-            resolvedVideoId = activeSource.youtubeVideoId ?: currentChannel.currentLiveVideoId
+
+            val isPrimaryOrMatchingSource = activeSource.youtubeChannelId == currentChannel.youtubeChannelId ||
+                                            activeSource.youtubeVideoId == currentChannel.youtubeVideoId ||
+                                            activeSource.youtubeVideoId == null
+
+            if (isPrimaryOrMatchingSource) {
+                resolvedVideoId = currentChannel.youtubeVideoId ?: activeSource.youtubeVideoId ?: currentChannel.currentLiveVideoId
+            } else {
+                resolvedVideoId = activeSource.youtubeVideoId ?: currentChannel.youtubeVideoId ?: currentChannel.currentLiveVideoId
+            }
             onLoadingChanged(false)
         }
     }

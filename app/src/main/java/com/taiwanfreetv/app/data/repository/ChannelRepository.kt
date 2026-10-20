@@ -66,20 +66,32 @@ class ChannelRepository(
         return config.copy(channels = validChannels)
     }
 
-    suspend fun resolveChannelLive(channel: Channel, forceRefresh: Boolean = false): Channel {
+        suspend fun resolveChannelLive(channel: Channel, forceRefresh: Boolean = false): Channel {
         val res = liveResolver.resolveChannelLiveStatus(channel, forceRefresh)
         val activeVideoId = if (res.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.LIVE || res.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.VOD) {
             res.liveVideoId ?: channel.youtubeVideoId
         } else {
             null
         }
+
+        // Update sources so that if a source has the same channel ID or was the fallback video ID, it gets updated to the newly resolved activeVideoId
+        val updatedSources = channel.sources.map { source ->
+            if (source.type == com.taiwanfreetv.app.data.model.StreamType.YOUTUBE_IFRAME &&
+                (source.youtubeChannelId == channel.youtubeChannelId || source.youtubeVideoId == channel.youtubeVideoId)) {
+                source.copy(youtubeVideoId = activeVideoId ?: source.youtubeVideoId)
+            } else {
+                source
+            }
+        }
+
         return channel.copy(
             liveStatus = res.liveStatus,
             currentLiveVideoId = res.liveVideoId,
             youtubeVideoId = activeVideoId,
             resolvedAt = res.resolvedAt,
             lastError = res.lastError,
-            liveItems = res.liveItems
+            liveItems = res.liveItems,
+            sources = updatedSources
         )
     }
 }
