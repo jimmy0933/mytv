@@ -73,9 +73,22 @@ data class VodItem(
     val description: String? = null
 )
 
+data class Source(
+    val type: StreamType,
+    @SerializedName("youtube_video_id")
+    val youtubeVideoId: String? = null,
+    @SerializedName("youtube_channel_id")
+    val youtubeChannelId: String? = null,
+    @SerializedName("stream_url")
+    val streamUrl: String? = null,
+    @SerializedName("official_url")
+    val officialUrl: String? = null
+)
+
 data class Channel(
     val id: String,
     val name: String,
+    val sources: List<Source> = emptyList(),
     val category: String,
     val type: StreamType,
     @SerializedName("youtube_video_id")

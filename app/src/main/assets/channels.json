@@ -5,14 +5,14 @@
     "全部",
     "新聞",
     "國際新聞",
-    "財經",
     "綜合",
     "兒童",
     "日本直播",
     "日本旅遊、美食",
     "日本綜藝",
     "日本動畫",
-    "收藏"
+    "收藏",
+    "台灣財經"
   ],
   "channels": [
     {
@@ -29,7 +29,14 @@
       "last_verified": "2026-04-01",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/TTV_News_logo.png/200px-TTV_News_logo.png",
       "number": 8,
-      "description": "台視新聞台 24小時線上直播 (官方平台觀看)"
+      "description": "台視新聞台 24小時線上直播 (官方平台觀看)",
+      "sources": [
+        {
+          "type": "external_web",
+          "youtube_channel_id": "UCg1a0a5j6O11i-6fH09-Npw",
+          "official_url": "https://news.ttv.com.tw/"
+        }
+      ]
     },
     {
       "id": "daai_tv",
@@ -45,7 +52,14 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 9,
-      "description": "大愛電視 24小時線上直播 (官方平台觀看)"
+      "description": "大愛電視 24小時線上直播 (官方平台觀看)",
+      "sources": [
+        {
+          "type": "external_web",
+          "youtube_channel_id": "UC1D3Hh-Y2u-x8_p-e-L4SDA",
+          "official_url": "https://www.daai.tv/"
+        }
+      ]
     },
     {
       "id": "ctv_news",
@@ -62,7 +76,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/CTV_Logo.svg/200px-CTV_Logo.svg.png",
       "number": 10,
-      "description": "中視新聞台 24小時線上直播"
+      "description": "中視新聞台 24小時線上直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "TCnaIE_SAtM",
+          "youtube_channel_id": "UC24vA23B19fI09Y0I1rU1wg",
+          "official_url": "https://www.ctv.com.tw/"
+        }
+      ]
     },
     {
       "id": "pts_main",
@@ -78,7 +100,14 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 13,
-      "description": "公共電視 網路直播 (官方平台觀看)"
+      "description": "公共電視 網路直播 (官方平台觀看)",
+      "sources": [
+        {
+          "type": "external_web",
+          "youtube_channel_id": "UC3uY-Y-u06zJv0uJ20M94bA",
+          "official_url": "https://www.pts.org.tw/"
+        }
+      ]
     },
     {
       "id": "nhk_world_japan",
@@ -93,7 +122,13 @@
       "last_verified": "2026-04-01",
       "logo_url": "https://www3.nhk.or.jp/nhkworld/common/assets/parts/img/logo.png",
       "number": 14,
-      "description": "NHK WORLD-JAPAN 免費英語國際新聞直播 (官方平台觀看)"
+      "description": "NHK WORLD-JAPAN 免費英語國際新聞直播 (官方平台觀看)",
+      "sources": [
+        {
+          "type": "external_web",
+          "official_url": "https://www3.nhk.or.jp/nhkworld/en/live_tv/"
+        }
+      ]
     },
     {
       "id": "ebc_yoyo",
@@ -110,7 +145,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 25,
-      "description": "YOYO TV 兒童節目 24小時直播"
+      "description": "YOYO TV 兒童節目 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "BjY_jXI15ks",
+          "youtube_channel_id": "UCJm-92O-F7959i0-yR4E3jQ",
+          "official_url": "https://yoyo.ebc.net.tw/"
+        }
+      ]
     },
     {
       "id": "cti_news",
@@ -127,7 +170,19 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 50,
-      "description": "中天新聞台 24小時HD線上直播"
+      "description": "中天新聞台 24小時HD線上直播",
+      "sources": [
+        {
+          "type": "hls",
+          "stream_url": "https://pubads.g.doubleclick.net/ssai/event/xyz",
+          "official_url": "https://gotv.ctitv.com.tw/"
+        },
+        {
+          "type": "youtube_iframe",
+          "youtube_channel_id": "UC5l1Yto5oOIgRXlI4p4VKbw",
+          "official_url": "https://gotv.ctitv.com.tw/"
+        }
+      ]
     },
     {
       "id": "ebc_news",
@@ -144,7 +199,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 51,
-      "description": "東森新聞台 24小時直播"
+      "description": "東森新聞台 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "V1p33hqPrUk",
+          "youtube_channel_id": "UC2L11808_A31E35Nf-QYq2w",
+          "official_url": "https://news.ebc.net.tw/"
+        }
+      ]
     },
     {
       "id": "cts_news",
@@ -161,7 +224,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/CTS_News_logo.svg/200px-CTS_News_logo.svg.png",
       "number": 52,
-      "description": "華視新聞資訊台 CH52 LIVE直播"
+      "description": "華視新聞資訊台 CH52 LIVE直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "wM0g8EoUZ_E",
+          "youtube_channel_id": "UC88e0L9P3S1E3fE3e3P_xFA",
+          "official_url": "https://news.cts.com.tw/"
+        }
+      ]
     },
     {
       "id": "ftv_news",
@@ -178,7 +249,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/FTV_News_Logo.png/200px-FTV_News_Logo.png",
       "number": 53,
-      "description": "民視新聞台 24小時直播"
+      "description": "民視新聞台 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "ylYJSBUgaMA",
+          "youtube_channel_id": "UC2V_x4E3v1fN0n2P43P5eXg",
+          "official_url": "https://www.ftvnews.com.tw/"
+        }
+      ]
     },
     {
       "id": "set_news",
@@ -195,7 +274,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 54,
-      "description": "三立新聞台 24小時直播"
+      "description": "三立新聞台 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "yeYC0mbSIOo",
+          "youtube_channel_id": "UCIU89_L4E4P7x4F4_gWfJpA",
+          "official_url": "https://www.setn.com/"
+        }
+      ]
     },
     {
       "id": "tvbs_news",
@@ -212,7 +299,14 @@
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TVBS_News_logo.png/200px-TVBS_News_logo.png",
       "number": 55,
       "description": "TVBS新聞台 24小時直播",
-      "youtube_video_id": null
+      "youtube_video_id": null,
+      "sources": [
+        {
+          "type": "external_web",
+          "youtube_channel_id": "UC5nwNW4KdC0SzRH1bYL5jvg",
+          "official_url": "https://news.tvbs.com.tw/live/news55"
+        }
+      ]
     },
     {
       "id": "ebc_financial",
@@ -229,7 +323,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 57,
-      "description": "東森財經新聞台 24小時直播"
+      "description": "東森財經新聞台 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "AEBeWMM1atA",
+          "youtube_channel_id": "UCsE094fP13Yy1a7UvN1eSgA",
+          "official_url": "https://fnc.ebc.net.tw/"
+        }
+      ]
     },
     {
       "id": "set_inews",
@@ -246,7 +348,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 88,
-      "description": "三立財經iNEWS 24小時直播"
+      "description": "三立財經iNEWS 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "pF507BLtbqU",
+          "youtube_channel_id": "UCJv6m9170u4WfO5L79gW-fA",
+          "official_url": "https://www.setn.com/"
+        }
+      ]
     },
     {
       "id": "ustv_news",
@@ -263,7 +373,15 @@
       "last_verified": "2026-10-18",
       "logo_url": "",
       "number": 58,
-      "description": "非凡新聞台 24小時直播"
+      "description": "非凡新聞台 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "eA6Aczd3FZM",
+          "youtube_channel_id": "UCYIVkruUoN04UjV9pkBTswg",
+          "official_url": "https://news.ustv.com.tw/"
+        }
+      ]
     },
     {
       "id": "ustv_business",
@@ -280,7 +398,15 @@
       "last_verified": "2026-10-18",
       "logo_url": "",
       "number": 89,
-      "description": "非凡商業台 24小時直播"
+      "description": "非凡商業台 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "xLqt2p6Dowo",
+          "youtube_channel_id": "UCLHsQL4YChylDX-06BCuNQA",
+          "official_url": "https://news.ustv.com.tw/"
+        }
+      ]
     },
     {
       "id": "global_finance",
@@ -297,7 +423,15 @@
       "last_verified": "2026-10-18",
       "logo_url": "",
       "number": 90,
-      "description": "寰宇財經 24小時直播"
+      "description": "寰宇財經 24小時直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "yAUQQ0DhPxI",
+          "youtube_channel_id": "UCSZwcE1d1SAGyc1yvQGSOjQ",
+          "official_url": "https://globalnewstv.com.tw/"
+        }
+      ]
     },
     {
       "id": "tbs_news_dig",
@@ -314,7 +448,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 101,
-      "description": "TBS NEWS DIG 日本24小時新聞直播"
+      "description": "TBS NEWS DIG 日本24小時新聞直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "Anr15FA9OCI",
+          "youtube_channel_id": "UC6AG81pAkf6Lbi_1VC5NmPA",
+          "official_url": "https://newsdig.tbs.co.jp/"
+        }
+      ]
     },
     {
       "id": "ntv_news24",
@@ -331,7 +473,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 102,
-      "description": "日テレNEWS24 日本24小時新聞直播"
+      "description": "日テレNEWS24 日本24小時新聞直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "t9kwjZBLI-A",
+          "youtube_channel_id": "UC4URLA0E3s5xG88Qx1fL7bA",
+          "official_url": "https://news.ntv.co.jp/"
+        }
+      ]
     },
     {
       "id": "weathernews_live",
@@ -348,7 +498,15 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 103,
-      "description": "ウェザーニュースLiVE 日本24小時天氣直播"
+      "description": "ウェザーニュースLiVE 日本24小時天氣直播",
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "C1aDnFfxZVY",
+          "youtube_channel_id": "UCNsidkYpIAQ4QaufptQBPHQ",
+          "official_url": "https://weathernews.jp/s/live/"
+        }
+      ]
     },
     {
       "id": "tv_osaka_otona_tabi",
@@ -381,6 +539,13 @@
           "duration": "23:00",
           "description": "電視大阪《おとな旅あるき旅》"
         }
+      ],
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "v0XWJjGSqhk",
+          "official_url": "https://www.tv-osaka.co.jp/ip4/tabi/"
+        }
       ]
     },
     {
@@ -397,7 +562,13 @@
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 202,
-      "description": "【隨選影片】NHK WORLD-JAPAN 日本旅遊文化隨選節目 (官方平台觀看)"
+      "description": "【隨選影片】NHK WORLD-JAPAN 日本旅遊文化隨選節目 (官方平台觀看)",
+      "sources": [
+        {
+          "type": "external_web",
+          "official_url": "https://www3.nhk.or.jp/nhkworld/en/ondemand/video/"
+        }
+      ]
     },
     {
       "id": "tv_osaka_moshimono_money",
@@ -430,6 +601,13 @@
           "duration": "45:00",
           "description": "電視大阪《もしものマネー道》"
         }
+      ],
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "Ruf3mplz2J4",
+          "official_url": "https://www.tv-osaka.co.jp/moneydo/"
+        }
       ]
     },
     {
@@ -455,6 +633,13 @@
           "youtube_video_id": "8NCP9UM53Fk",
           "duration": "24:00",
           "description": "木棉花 Muse 官方動畫精選"
+        }
+      ],
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "8NCP9UM53Fk",
+          "official_url": "https://www.youtube.com/@MuseAni"
         }
       ]
     },
@@ -482,41 +667,14 @@
           "duration": "24:00",
           "description": "Ani-One 官方動畫精選"
         }
+      ],
+      "sources": [
+        {
+          "type": "youtube_iframe",
+          "youtube_video_id": "--k9JmqT-hs",
+          "official_url": "https://www.youtube.com/@AniOneAni"
+        }
       ]
-    },
-    {
-      "id": "ustv_news",
-      "name": "非凡新聞台",
-      "category": "財經",
-      "type": "youtube_iframe",
-      "youtube_video_id": null,
-      "youtube_channel_id": "UCYIVkruUoN04UjV9pkBTswg",
-      "official_url": "https://www.ustv.com.tw/",
-      "embeddable": true,
-      "status": "playable",
-      "live_status": "live",
-      "status_message": "官方 YouTube 24小時直播可成功內嵌播放",
-      "last_verified": "2024-04-01",
-      "logo_url": "",
-      "number": 58,
-      "description": "非凡新聞台 24小時直播"
-    },
-    {
-      "id": "ustv_business",
-      "name": "非凡商業台",
-      "category": "財經",
-      "type": "youtube_iframe",
-      "youtube_video_id": null,
-      "youtube_channel_id": "UCLHsQL4YChylDX-06BCuNQA",
-      "official_url": "https://www.ustv.com.tw/",
-      "embeddable": true,
-      "status": "playable",
-      "live_status": "live",
-      "status_message": "官方 YouTube 直播可成功內嵌播放",
-      "last_verified": "2024-04-01",
-      "logo_url": "",
-      "number": 89,
-      "description": "非凡商業台 24小時直播"
     }
   ]
 }
