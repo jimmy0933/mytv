@@ -246,7 +246,11 @@ fun YouTubeIFramePlayer(
                                 when (state) {
                                     1 -> onLoadingChanged(false) // PLAYING
                                     3 -> onLoadingChanged(true)  // BUFFERING
-                                    0, 2, 5 -> onLoadingChanged(false) // ENDED, PAUSED, CUED
+                                    0 -> { // ENDED
+                                        onLoadingChanged(false)
+                                        onEnded()
+                                    }
+                                    2, 5 -> onLoadingChanged(false) // PAUSED, CUED
                                 }
                             },
                             onErrorCallback = { errorCode, errorMsg ->
