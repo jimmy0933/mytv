@@ -21,7 +21,8 @@ class ChannelRepository(
 
     suspend fun loadLocalConfig(): ChannelConfig = withContext(Dispatchers.IO) {
         val jsonString = context.assets.open("channels.json").bufferedReader().use { it.readText() }
-        gson.fromJson(jsonString, ChannelConfig::class.java)
+        val config = gson.fromJson(jsonString, ChannelConfig::class.java)
+        validateConfig(config)
     }
 
     suspend fun fetchRemoteConfig(remoteUrl: String): ChannelConfig? = withContext(Dispatchers.IO) {
@@ -35,7 +36,8 @@ class ChannelRepository(
             if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                 val reader = BufferedReader(InputStreamReader(connection.inputStream))
                 val jsonString = reader.use { it.readText() }
-                return@withContext gson.fromJson(jsonString, ChannelConfig::class.java)
+                val config = gson.fromJson(jsonString, ChannelConfig::class.java)
+                return@withContext validateConfig(config)
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -44,7 +46,24 @@ class ChannelRepository(
     }
 
     fun parseConfigJson(jsonString: String): ChannelConfig {
-        return gson.fromJson(jsonString, ChannelConfig::class.java)
+        val config = gson.fromJson(jsonString, ChannelConfig::class.java)
+        return validateConfig(config)
+    }
+
+    private fun validateConfig(config: ChannelConfig?): ChannelConfig {
+        if (config == null) return ChannelConfig(0, "", emptyList(), emptyList())
+        val validChannels = mutableListOf<Channel>()
+        val seenIds = mutableSetOf<String>()
+
+        for (channel in config.channels) {
+            if (channel.id.isBlank()) continue
+            if (seenIds.contains(channel.id)) continue // Skip duplicates
+
+            seenIds.add(channel.id)
+            validChannels.add(channel)
+        }
+
+        return config.copy(channels = validChannels)
     }
 
     suspend fun resolveChannelLive(channel: Channel, forceRefresh: Boolean = false): Channel {

@@ -43,6 +43,9 @@ enum class LiveStatus {
     @SerializedName("unknown")
     UNKNOWN,
 
+    @SerializedName("geo_restricted")
+    GEO_RESTRICTED,
+
     @SerializedName("embed_disabled")
     EMBED_DISABLED,
 
@@ -55,6 +58,7 @@ enum class LiveStatus {
 
 data class LiveItem(
     val id: String,
+    val sources: List<Source> = emptyList(),
     val title: String,
     @SerializedName("youtube_video_id")
     val youtubeVideoId: String,
@@ -66,6 +70,7 @@ data class LiveItem(
 
 data class VodItem(
     val id: String,
+    val sources: List<Source> = emptyList(),
     val title: String,
     @SerializedName("youtube_video_id")
     val youtubeVideoId: String,
@@ -87,8 +92,8 @@ data class Source(
 
 data class Channel(
     val id: String,
-    val name: String,
     val sources: List<Source> = emptyList(),
+    val name: String,
     val category: String,
     val type: StreamType,
     @SerializedName("youtube_video_id")
@@ -127,6 +132,7 @@ data class Channel(
 
 data class EPGProgram(
     val id: String,
+    val sources: List<Source> = emptyList(),
     val channelId: String,
     val title: String,
     val startTime: String,
