@@ -179,7 +179,7 @@ class YouTubeLiveResolver(
                 }
                 return LiveResolutionResult(
                     liveStatus = status,
-                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED || status == LiveStatus.GEO_RESTRICTED) chResult.videoId else null,
+                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED || status == LiveStatus.GEO_RESTRICTED || status == LiveStatus.UNKNOWN || status == LiveStatus.OFFLINE) chResult.videoId else null,
                     resolvedAt = timestamp,
                     resolvedTimestamp = now,
                     lastError = chResult.unplayableReason
@@ -200,7 +200,7 @@ class YouTubeLiveResolver(
                 }
                 return LiveResolutionResult(
                     liveStatus = status,
-                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED || status == LiveStatus.GEO_RESTRICTED) channel.youtubeVideoId else null,
+                    liveVideoId = if (status == LiveStatus.LIVE || status == LiveStatus.EMBED_DISABLED || status == LiveStatus.GEO_RESTRICTED || status == LiveStatus.UNKNOWN || status == LiveStatus.OFFLINE) channel.youtubeVideoId else null,
                     resolvedAt = timestamp,
                     resolvedTimestamp = now,
                     lastError = watchResult.unplayableReason

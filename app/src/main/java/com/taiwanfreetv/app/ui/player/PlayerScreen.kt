@@ -85,14 +85,12 @@ fun PlayerScreen(
 
     val isPermanentEmbedRestriction = remember(currentChannel, activeSource, errorCode) {
         activeSource.type == StreamType.EXTERNAL_WEB ||
-        currentChannel.status == PlaybackStatus.EMBED_DISABLED ||
-        errorCode == 101 || errorCode == 150 || errorCode == 152 || errorCode == 153 ||
-        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.EMBED_DISABLED
+        currentChannel.status == PlaybackStatus.EMBED_DISABLED
     }
 
-    val isTemporaryLiveIssue = remember(currentChannel) {
-        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE ||
-        currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN
+    val isTemporaryLiveIssue = remember(currentChannel, activeSource) {
+        val targetVideoId = activeVodVideoId ?: activeSource.youtubeVideoId ?: currentChannel.currentLiveVideoId
+        targetVideoId == null && (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE || currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN)
     }
 
     LaunchedEffect(currentChannel.id, currentChannel.liveStatus, retryTrigger) {
