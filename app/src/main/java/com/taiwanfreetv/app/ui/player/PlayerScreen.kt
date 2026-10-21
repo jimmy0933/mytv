@@ -90,7 +90,7 @@ fun PlayerScreen(
 
     val isTemporaryLiveIssue = remember(currentChannel, activeSource) {
         val targetVideoId = activeVodVideoId ?: activeSource.youtubeVideoId ?: currentChannel.currentLiveVideoId
-        targetVideoId == null && (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE || currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN)
+        activeSource.type == StreamType.YOUTUBE_IFRAME && targetVideoId == null && (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE || currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN)
     }
 
     LaunchedEffect(currentChannel.id, currentChannel.liveStatus, retryTrigger) {
