@@ -85,37 +85,16 @@ fun PlayerScreen(
 
     val isPermanentEmbedRestriction = remember(currentChannel, activeSource, errorCode) {
         activeSource.type == StreamType.EXTERNAL_WEB ||
-        currentChannel.status == PlaybackStatus.EMBED_DISABLED
-    }
-
-    val isTemporaryLiveIssue = remember(currentChannel, activeSource) {
-        val targetVideoId = activeVodVideoId ?: activeSource.youtubeVideoId ?: currentChannel.currentLiveVideoId
-        activeSource.type == StreamType.YOUTUBE_IFRAME && targetVideoId == null && (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE || currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN)
+        activeSource.type == StreamType.YOUTUBE_IFRAME ||
+        currentChannel.status == PlaybackStatus.EMBED_DISABLED ||
+        currentChannel.status == PlaybackStatus.NO_SOURCE ||
+        currentChannel.status == PlaybackStatus.WEB_ONLY
     }
 
     LaunchedEffect(currentChannel.id, currentChannel.liveStatus, retryTrigger) {
-        if (currentChannel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING) {
-            isLoading = true
-        } else {
-            isLoading = false
-            errorMessage = null
-            errorCode = 0
-
-            val validVideoIds = currentChannel.liveItems?.map { it.youtubeVideoId }.orEmpty() +
-                                currentChannel.vodItems?.map { it.youtubeVideoId }.orEmpty() +
-                                listOfNotNull(currentChannel.youtubeVideoId, currentChannel.currentLiveVideoId)
-
-            val isActiveVodValid = activeVodVideoId != null && validVideoIds.contains(activeVodVideoId)
-
-            if (!isActiveVodValid) {
-                if (!currentChannel.liveItems.isNullOrEmpty()) {
-                    val defaultLive = currentChannel.liveItems.firstOrNull { !it.isUpcoming } ?: currentChannel.liveItems.first()
-                    activeVodVideoId = defaultLive.youtubeVideoId
-                } else {
-                    activeVodVideoId = currentChannel.youtubeVideoId ?: currentChannel.currentLiveVideoId
-                }
-            }
-        }
+        isLoading = false
+        errorMessage = null
+        errorCode = 0
         areControlsVisible = true
         lastInteractionTime = System.currentTimeMillis()
     }
