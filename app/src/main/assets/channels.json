@@ -19,21 +19,25 @@
       "id": "ttv_news",
       "name": "台視新聞台",
       "category": "新聞",
-      "type": "external_web",
+      "type": "youtube_iframe",
       "youtube_channel_id": "UCg1a0a5j6O11i-6fH09-Npw",
       "official_url": "https://news.ttv.com.tw/",
-      "embeddable": false,
-      "status": "embed_disabled",
+      "embeddable": true,
+      "status": "playable",
       "live_status": "embed_disabled",
-      "status_message": "台視新聞台 YouTube 直播受內嵌權限限制，提供官方直播網頁觀看",
+      "status_message": "YouTube 直播可內嵌播放",
       "last_verified": "2026-04-01",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/TTV_News_logo.png/200px-TTV_News_logo.png",
       "number": 8,
       "description": "台視新聞台 24小時線上直播 (官方平台觀看)",
       "sources": [
         {
-          "type": "external_web",
+          "type": "youtube_iframe",
           "youtube_channel_id": "UCg1a0a5j6O11i-6fH09-Npw",
+          "official_url": "https://news.ttv.com.tw/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://news.ttv.com.tw/"
         }
       ]
@@ -42,21 +46,25 @@
       "id": "daai_tv",
       "name": "大愛電視台",
       "category": "綜合",
-      "type": "external_web",
+      "type": "youtube_iframe",
       "youtube_channel_id": "UC1D3Hh-Y2u-x8_p-e-L4SDA",
       "official_url": "https://www.daai.tv/",
-      "embeddable": false,
-      "status": "embed_disabled",
+      "embeddable": true,
+      "status": "playable",
       "live_status": "embed_disabled",
-      "status_message": "大愛電視台 YouTube 直播受內嵌權限限制，提供官方直播網頁觀看",
+      "status_message": "YouTube 直播可內嵌播放",
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 9,
       "description": "大愛電視 24小時線上直播 (官方平台觀看)",
       "sources": [
         {
-          "type": "external_web",
+          "type": "youtube_iframe",
           "youtube_channel_id": "UC1D3Hh-Y2u-x8_p-e-L4SDA",
+          "official_url": "https://www.daai.tv/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://www.daai.tv/"
         }
       ]
@@ -83,6 +91,10 @@
           "youtube_video_id": "TCnaIE_SAtM",
           "youtube_channel_id": "UC24vA23B19fI09Y0I1rU1wg",
           "official_url": "https://www.ctv.com.tw/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://www.ctv.com.tw/"
         }
       ]
     },
@@ -90,21 +102,29 @@
       "id": "pts_main",
       "name": "公視主頻道",
       "category": "綜合",
-      "type": "external_web",
+      "type": "hls",
       "youtube_channel_id": "UC3uY-Y-u06zJv0uJ20M94bA",
       "official_url": "https://www.pts.org.tw/",
-      "embeddable": false,
-      "status": "embed_disabled",
+      "embeddable": true,
+      "status": "playable",
       "live_status": "embed_disabled",
-      "status_message": "公視官方直播限制第三方 App 內嵌，提供官方直播網頁觀看",
+      "status_message": "官方 HLS 串流",
       "last_verified": "2026-04-01",
       "logo_url": "",
       "number": 13,
       "description": "公共電視 網路直播 (官方平台觀看)",
       "sources": [
         {
-          "type": "external_web",
+          "type": "hls",
+          "url": "https://pts-pts.cdn.hinet.net/live/pts-pts/master.m3u8"
+        },
+        {
+          "type": "youtube_iframe",
           "youtube_channel_id": "UC3uY-Y-u06zJv0uJ20M94bA",
+          "official_url": "https://www.pts.org.tw/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://www.pts.org.tw/"
         }
       ]
@@ -113,17 +133,21 @@
       "id": "nhk_world_japan",
       "name": "NHK WORLD-JAPAN",
       "category": "國際新聞",
-      "type": "external_web",
+      "type": "hls",
       "official_url": "https://www3.nhk.or.jp/nhkworld/en/live_tv/",
-      "embeddable": false,
-      "status": "embed_disabled",
+      "embeddable": true,
+      "status": "playable",
       "live_status": "embed_disabled",
-      "status_message": "NHK 官方免費英語國際頻道，無第三方 App 內嵌授權，引導至官方直播網頁觀看",
+      "status_message": "官方 HLS 串流",
       "last_verified": "2026-04-01",
       "logo_url": "https://www3.nhk.or.jp/nhkworld/common/assets/parts/img/logo.png",
       "number": 14,
       "description": "NHK WORLD-JAPAN 免費英語國際新聞直播 (官方平台觀看)",
       "sources": [
+        {
+          "type": "hls",
+          "url": "https://b-nhkwglobal-s.akamaized.net/hls/live/2003459/nhkwglobal/index_v1200.m3u8"
+        },
         {
           "type": "external_web",
           "official_url": "https://www3.nhk.or.jp/nhkworld/en/live_tv/"
@@ -152,6 +176,10 @@
           "youtube_video_id": "BjY_jXI15ks",
           "youtube_channel_id": "UCJm-92O-F7959i0-yR4E3jQ",
           "official_url": "https://yoyo.ebc.net.tw/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://yoyo.ebc.net.tw/"
         }
       ]
     },
@@ -175,6 +203,10 @@
         {
           "type": "youtube_iframe",
           "youtube_channel_id": "UC5l1Yto5oOIgRXlI4p4VKbw",
+          "official_url": "https://gotv.ctitv.com.tw/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://gotv.ctitv.com.tw/"
         }
       ]
@@ -201,6 +233,10 @@
           "youtube_video_id": "V1p33hqPrUk",
           "youtube_channel_id": "UC2L11808_A31E35Nf-QYq2w",
           "official_url": "https://news.ebc.net.tw/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://news.ebc.net.tw/"
         }
       ]
     },
@@ -225,6 +261,10 @@
           "type": "youtube_iframe",
           "youtube_video_id": "wM0g8EoUZ_E",
           "youtube_channel_id": "UC88e0L9P3S1E3fE3e3P_xFA",
+          "official_url": "https://news.cts.com.tw/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://news.cts.com.tw/"
         }
       ]
@@ -251,6 +291,10 @@
           "youtube_video_id": "ylYJSBUgaMA",
           "youtube_channel_id": "UC2V_x4E3v1fN0n2P43P5eXg",
           "official_url": "https://www.ftvnews.com.tw/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://www.ftvnews.com.tw/"
         }
       ]
     },
@@ -276,6 +320,10 @@
           "youtube_video_id": "yeYC0mbSIOo",
           "youtube_channel_id": "UCIU89_L4E4P7x4F4_gWfJpA",
           "official_url": "https://www.setn.com/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://www.setn.com/"
         }
       ]
     },
@@ -283,13 +331,13 @@
       "id": "tvbs_news",
       "name": "TVBS新聞台",
       "category": "新聞",
-      "type": "external_web",
+      "type": "youtube_iframe",
       "youtube_channel_id": "UC5nwNW4KdC0SzRH1bYL5jvg",
       "official_url": "https://news.tvbs.com.tw/live/news55",
-      "embeddable": false,
-      "status": "embed_disabled",
+      "embeddable": true,
+      "status": "playable",
       "live_status": "embed_disabled",
-      "status_message": "TVBS 新聞台官方 YouTube 頻道禁止第三方 App 內嵌，提供官方直播網頁觀看",
+      "status_message": "YouTube 直播可內嵌播放",
       "last_verified": "2026-04-01",
       "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/TVBS_News_logo.png/200px-TVBS_News_logo.png",
       "number": 55,
@@ -297,8 +345,12 @@
       "youtube_video_id": null,
       "sources": [
         {
-          "type": "external_web",
+          "type": "youtube_iframe",
           "youtube_channel_id": "UC5nwNW4KdC0SzRH1bYL5jvg",
+          "official_url": "https://news.tvbs.com.tw/live/news55"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://news.tvbs.com.tw/live/news55"
         }
       ]
@@ -325,6 +377,10 @@
           "youtube_video_id": "AEBeWMM1atA",
           "youtube_channel_id": "UCsE094fP13Yy1a7UvN1eSgA",
           "official_url": "https://fnc.ebc.net.tw/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://fnc.ebc.net.tw/"
         }
       ]
     },
@@ -349,6 +405,10 @@
           "type": "youtube_iframe",
           "youtube_video_id": "pF507BLtbqU",
           "youtube_channel_id": "UCJv6m9170u4WfO5L79gW-fA",
+          "official_url": "https://www.setn.com/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://www.setn.com/"
         }
       ]
@@ -375,6 +435,10 @@
           "youtube_video_id": "eA6Aczd3FZM",
           "youtube_channel_id": "UCYIVkruUoN04UjV9pkBTswg",
           "official_url": "https://news.ustv.com.tw/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://news.ustv.com.tw/"
         }
       ]
     },
@@ -399,6 +463,10 @@
           "type": "youtube_iframe",
           "youtube_video_id": "xLqt2p6Dowo",
           "youtube_channel_id": "UCLHsQL4YChylDX-06BCuNQA",
+          "official_url": "https://news.ustv.com.tw/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://news.ustv.com.tw/"
         }
       ]
@@ -425,6 +493,10 @@
           "youtube_video_id": "yAUQQ0DhPxI",
           "youtube_channel_id": "UCSZwcE1d1SAGyc1yvQGSOjQ",
           "official_url": "https://globalnewstv.com.tw/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://globalnewstv.com.tw/"
         }
       ]
     },
@@ -449,6 +521,10 @@
           "type": "youtube_iframe",
           "youtube_video_id": "Anr15FA9OCI",
           "youtube_channel_id": "UC6AG81pAkf6Lbi_1VC5NmPA",
+          "official_url": "https://newsdig.tbs.co.jp/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://newsdig.tbs.co.jp/"
         }
       ]
@@ -475,6 +551,10 @@
           "youtube_video_id": "t9kwjZBLI-A",
           "youtube_channel_id": "UC4URLA0E3s5xG88Qx1fL7bA",
           "official_url": "https://news.ntv.co.jp/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://news.ntv.co.jp/"
         }
       ]
     },
@@ -499,6 +579,10 @@
           "type": "youtube_iframe",
           "youtube_video_id": "C1aDnFfxZVY",
           "youtube_channel_id": "UCNsidkYpIAQ4QaufptQBPHQ",
+          "official_url": "https://weathernews.jp/s/live/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://weathernews.jp/s/live/"
         }
       ]
@@ -539,6 +623,10 @@
         {
           "type": "youtube_iframe",
           "youtube_video_id": "v0XWJjGSqhk",
+          "official_url": "https://www.tv-osaka.co.jp/ip4/tabi/"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://www.tv-osaka.co.jp/ip4/tabi/"
         }
       ]
@@ -602,6 +690,10 @@
           "type": "youtube_iframe",
           "youtube_video_id": "Ruf3mplz2J4",
           "official_url": "https://www.tv-osaka.co.jp/moneydo/"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://www.tv-osaka.co.jp/moneydo/"
         }
       ]
     },
@@ -635,6 +727,10 @@
           "type": "youtube_iframe",
           "youtube_video_id": "8NCP9UM53Fk",
           "official_url": "https://www.youtube.com/@MuseAni"
+        },
+        {
+          "type": "external_web",
+          "official_url": "https://www.youtube.com/@MuseAni"
         }
       ]
     },
@@ -667,6 +763,10 @@
         {
           "type": "youtube_iframe",
           "youtube_video_id": "--k9JmqT-hs",
+          "official_url": "https://www.youtube.com/@AniOneAni"
+        },
+        {
+          "type": "external_web",
           "official_url": "https://www.youtube.com/@AniOneAni"
         }
       ]
