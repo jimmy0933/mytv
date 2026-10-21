@@ -13,8 +13,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class ChannelRepository(
-    private val context: Context,
-    val liveResolver: YouTubeLiveResolver = YouTubeLiveResolver()
+    private val context: Context
 ) {
 
     private val gson = Gson()
@@ -60,38 +59,38 @@ class ChannelRepository(
             if (seenIds.contains(channel.id)) continue // Skip duplicates
 
             seenIds.add(channel.id)
-            validChannels.add(channel)
+
+            val validatedSources = channel.sources.map { source ->
+                if (source.type == com.taiwanfreetv.app.data.model.StreamType.HLS && source.streamUrl.isNullOrBlank()) {
+                    source
+                } else {
+                    source
+                }
+            }
+
+            var newStatus = channel.status
+
+            val hasValidHls = validatedSources.any { it.type == com.taiwanfreetv.app.data.model.StreamType.HLS && !it.streamUrl.isNullOrBlank() }
+            val hasWebOnly = validatedSources.any { it.type == com.taiwanfreetv.app.data.model.StreamType.EXTERNAL_WEB }
+            val hasYouTube = validatedSources.any { it.type == com.taiwanfreetv.app.data.model.StreamType.YOUTUBE_IFRAME }
+
+            if (!hasValidHls) {
+                if (hasYouTube) {
+                    newStatus = com.taiwanfreetv.app.data.model.PlaybackStatus.NO_SOURCE
+                } else if (hasWebOnly) {
+                    newStatus = com.taiwanfreetv.app.data.model.PlaybackStatus.WEB_ONLY
+                } else {
+                    newStatus = com.taiwanfreetv.app.data.model.PlaybackStatus.NO_SOURCE
+                }
+            }
+
+            validChannels.add(channel.copy(sources = validatedSources, status = newStatus))
         }
 
         return config.copy(channels = validChannels)
     }
 
-        suspend fun resolveChannelLive(channel: Channel, forceRefresh: Boolean = false): Channel {
-        val res = liveResolver.resolveChannelLiveStatus(channel, forceRefresh)
-        val activeVideoId = if (res.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.LIVE || res.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.VOD) {
-            res.liveVideoId ?: channel.youtubeVideoId
-        } else {
-            null
-        }
-
-        // Update sources so that if a source has the same channel ID or was the fallback video ID, it gets updated to the newly resolved activeVideoId
-        val updatedSources = channel.sources.map { source ->
-            if (source.type == com.taiwanfreetv.app.data.model.StreamType.YOUTUBE_IFRAME &&
-                (source.youtubeChannelId == channel.youtubeChannelId || source.youtubeVideoId == channel.youtubeVideoId)) {
-                source.copy(youtubeVideoId = activeVideoId ?: source.youtubeVideoId)
-            } else {
-                source
-            }
-        }
-
-        return channel.copy(
-            liveStatus = res.liveStatus,
-            currentLiveVideoId = res.liveVideoId,
-            youtubeVideoId = activeVideoId,
-            resolvedAt = res.resolvedAt,
-            lastError = res.lastError,
-            liveItems = res.liveItems,
-            sources = updatedSources
-        )
+    suspend fun resolveChannelLive(channel: Channel, forceRefresh: Boolean = false): Channel {
+        return channel
     }
 }

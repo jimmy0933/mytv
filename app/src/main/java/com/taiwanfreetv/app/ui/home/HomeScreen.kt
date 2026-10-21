@@ -298,14 +298,12 @@ fun ChannelCard(
                         }
 
                         // Playback status tag
-                        val isExternal = channel.type == StreamType.EXTERNAL_WEB || channel.status == PlaybackStatus.EMBED_DISABLED
-                        val (statusText, statusBg) = when {
-                            channel.isVod -> "VOD 隨選" to Color(0xFF7B1FA2)
-                            isExternal -> "官方平台觀看" to Color(0xFFD84315)
-                            channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.LIVE -> "LIVE 直播中" to Color(0xFF2E7D32)
-                            channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UPCOMING -> "UPCOMING 預告中" to Color(0xFF1976D2)
-                            channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.OFFLINE -> "OFFLINE 未直播" to Color(0xFF616161)
-                            channel.liveStatus == com.taiwanfreetv.app.data.model.LiveStatus.UNKNOWN -> "UNKNOWN 待確認" to Color(0xFFE65100)
+                        val (statusText, statusBg) = when (channel.status) {
+                            PlaybackStatus.UNVERIFIED -> "待驗證" to Color(0xFFF57C00)
+                            PlaybackStatus.NO_SOURCE -> "尚無可用來源" to Color(0xFFD32F2F)
+                            PlaybackStatus.WEB_ONLY -> "僅官網" to Color(0xFFD84315)
+                            PlaybackStatus.EMBED_DISABLED -> "官方平台觀看" to Color(0xFFD84315)
+                            PlaybackStatus.SOURCE_INVALID -> "來源失效" to Color(0xFFD32F2F)
                             else -> "App 內可播放" to Color(0xFF2E7D32)
                         }
 

@@ -27,7 +27,13 @@ enum class PlaybackStatus {
     SOURCE_INVALID,
 
     @SerializedName("unverified")
-    UNVERIFIED
+    UNVERIFIED,
+
+    @SerializedName("no_source")
+    NO_SOURCE,
+
+    @SerializedName("web_only")
+    WEB_ONLY
 }
 
 enum class LiveStatus {
@@ -84,7 +90,7 @@ data class Source(
     val youtubeVideoId: String? = null,
     @SerializedName("youtube_channel_id")
     val youtubeChannelId: String? = null,
-    @SerializedName("stream_url")
+    @SerializedName(value = "stream_url", alternate = ["url"])
     val streamUrl: String? = null,
     @SerializedName("official_url")
     val officialUrl: String? = null
@@ -102,7 +108,7 @@ data class Channel(
     val youtubeChannelId: String? = null,
     @SerializedName("current_live_video_id")
     val currentLiveVideoId: String? = null,
-    @SerializedName("stream_url")
+    @SerializedName(value = "stream_url", alternate = ["url"])
     val streamUrl: String? = null,
     @SerializedName("official_url")
     val officialUrl: String,

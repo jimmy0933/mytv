@@ -181,11 +181,7 @@ class MainActivity : ComponentActivity() {
                     currentScreen = Screen.Player(channel.copy(liveStatus = com.taiwanfreetv.app.data.model.LiveStatus.RESOLVING)) // Set immediately to channel to let UI show loading state
                 }
 
-                val resolvedChannel = if ((channel.type == StreamType.YOUTUBE_IFRAME || channel.sources.any { it.type == StreamType.YOUTUBE_IFRAME }) && !channel.isVod) {
-                    channelRepository.resolveChannelLive(channel, forceRefresh)
-                } else {
-                    channel
-                }
+                val resolvedChannel = channel
 
                 if (currentGen == requestGeneration) {
                     currentScreen = Screen.Player(resolvedChannel)
@@ -199,16 +195,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun resolveAllChannelsInBackground() {
-        lifecycleScope.launch {
-            val updatedList = allChannels.map { ch ->
-                if ((ch.type == StreamType.YOUTUBE_IFRAME || ch.sources.any { it.type == StreamType.YOUTUBE_IFRAME }) && !ch.isVod) {
-                    channelRepository.resolveChannelLive(ch)
-                } else {
-                    ch
-                }
-            }
-            allChannels = updatedList
-        }
     }
 
     private fun switchNextChannel(current: Channel) {
